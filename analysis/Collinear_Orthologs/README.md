@@ -21,7 +21,7 @@ python OrthoFinder_to_Singletons.py ../../Orthogroups.csv > singletons.txt
 `python Singletons_to_pairwise.py singletons.txt > DDtAt_h.homology`
 
 \#Make .gff file for MCScan input    
-`cp DDtAt.gff > MCScanX_h.DDtAt_h.gff`
+`cp DDtAt.gff > MCScanX_h/DDtAt_h.gff`
 
 ```
 module load mscanx/2017/-4-3
@@ -36,3 +36,5 @@ gunzip -c ../WorkingDirectory/Blast*.gz >> blast_orthoformat.txt
 python OrthoFinder_blast_uncode.py ../WorkingDirectory/SequenceIDs.txt blast_orthoformat.txt > DDtAt.blast  
 rm blast_orthoformat.txt  
 ```
+
+#### Make gff file for MCScanX

@@ -1,6 +1,13 @@
 #!/usr/bin/python
 
-"""Usage: .py all.collinearity <number of genomes in analysis>"""
+"""This scripts takes in the all.groups.tandem output from script 2_ and the all.collinearity from MCScanX_h
+and clusters each collinear block into a genome-wide set of orthogroups. This also will add any tandem duplicates 
+to increase the total number of orthogroups detected. 
+
+This program outputs one file: 
+all.singletons #file in which only single copy genes are detected by MCScanX, unless that gene is part of a tandem array.
+
+Usage: .py all.collinearity all.tandem <number of genomes in analysis>"""
 
 import sys
 
@@ -58,9 +65,18 @@ def find_group(a, lists):
 
 components = []
 block = []
-
+tandem_arrays = []
 
 with open(sys.argv[1], "r") as handle: 
+    for line in handle:
+        line = line.strip()
+        tandem_arrays.append(line)
+        line = line.split('\t')
+        components.append(line)
+
+tandem_arrays = [i.split('\t') for i in tandem_arrays]
+
+with open(sys.argv[2], "r") as handle: #DDtAt.collinearity from MCScanX_h 
     for line in handle:
         line = line.strip()
         if line[0:2] == "##":
@@ -70,17 +86,20 @@ with open(sys.argv[1], "r") as handle:
             block.append([line[1], line[2]])
     process_group() #puts final collinear block through algorithm            
 
-
-
 components.sort(key=len, reverse=True)
+
+sys.stdout = open(sys.argv[4], "w+")
 
 for i in components:
     i = sorted(i)
-    if len(i) == int(sys.argv[2]):
-        print(*i, sep="\t")
-
-
-
-
-
- 
+    tandems = []
+    for j in range(0, len(i)):
+        j_group = find_group(i[j], tandem_arrays)
+        for k in range(j + 1, len(i)):
+            if i[k] in j_group and i[k] not in tandems:
+                tandems.append(i[k])
+    #print(str(len(tandems) + int(sys.argv[3])) + "\t" + str(len(i))) 
+    if len(tandems) + int(sys.argv[3]) == len(i):
+        print(*i, sep = '\t')
+            
+        

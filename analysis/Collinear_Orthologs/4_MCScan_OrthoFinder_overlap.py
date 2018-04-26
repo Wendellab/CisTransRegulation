@@ -1,9 +1,29 @@
 #!/usr/bin/python
 
-"""Usage: .py Singletons.txt all.collinearity"""
+"""Usage: .py all.singletons all.collinearity geneID.txt all.tandem
+
+This script takes in a file with all singletons in it, 
+the collinearity output from MCScanX, and a file with
+species-specific geneIDs in them. Each line in the geneID.txt file
+should be the begnning string for gene sequence names (e.g. Gorai, Gohir.A, Gohir.D)
+"""
 
 import sys
 
+
+def process_group():
+    global block
+    global pos
+    global neg
+    if pos > 0 and block:
+        #print(str(pos) + '\t' + str(neg))
+        #if pos == 1: 
+        for item in block:
+        #        print(*item, sep='\t')
+            connected_components(item[0], item[1])
+    block = []
+    pos = 0
+    neg = 0
 
 def check_singletons(geneA, geneB):
     if not any(geneA in sl for sl in singletons): #check if geneA is in singletons list
@@ -51,18 +71,6 @@ def connected_components(a,b):
         return(components)
 
 
-def process_group():
-    global block
-    global pos
-    global neg
-    if block: #pos > 0 and block:
-        for item in block:
-            connected_components(item[0], item[1])
-    block = []
-    pos = 0
-    neg = 0
-
-
 def find_group(a, lists):
     for i in lists:
         if a in i:
@@ -70,17 +78,14 @@ def find_group(a, lists):
     return []
 
 
-
-
+seqID = []
 singletons = []
 components = []
-edge_list = []
 block = []
 pos = 0
 neg = 0
 
-
-with open(sys.argv[1], "r") as handle: 
+with open(sys.argv[1], "r") as handle: #all.singletons 
     first_line = handle.readline()
     for line in handle: 
         line = line.strip().split("\t")
@@ -88,37 +93,62 @@ with open(sys.argv[1], "r") as handle:
       
 
 
-with open(sys.argv[2], "r") as handle: 
+with open(sys.argv[2], "r") as handle: #all.collinearity
     for line in handle:
         line = line.strip()
 #        print(line)
-        if line[0:3] == "## ":
+        if line[0:2] == "##":
             process_group()
         elif line[0] != "#":
             line = line.split('\t')
-            block.append([line[1], line[2]])
+            block.append([line[1], line[2], line[3]])
 #            print(*block, sep = '\t')
             singleton_match = find_group(line[1], singletons)
             if singleton_match:
                 if line[2] in singleton_match:
                     pos += 1
+                    block[-1].append("POS")
                 else:
                     neg += 1
+                    block[-1].append("NEG")
             else: 
                singleton_match = find_group(line[2], singletons)
                if singleton_match:
                    neg += 1
-            
+    process_group() #last group doesn't have '##', so explicitly call it here
 
 
-        #else: break ##Add funciton here to work with whole group 
+
+with open(sys.argv[3], "r") as handle: #geneID.txt
+    for line in handle: 
+        line = line.strip()
+        seqID.append(line)
+    seqID = sorted(seqID)
+
+with open(sys.argv[4], "r") as handle: #all.tandem
+    for line in handle:
+        line = line.strip().split(',')
+        connected_components(line[0], line[1])
+
 
 components.sort(key=len, reverse=True)
 
-for i in components:
-    print(*i, sep="\t")
-
-
+"""
+with open("MCScanX_groups_posmore0.csv", "w+") as handle:
+#with open(sys.argv[5], "w+") as handle: #outfile.txt
+    for item in seqID:
+        handle.write("\t%s" % item)
+    handle.write("\n")
+    for n,i in enumerate(components):
+        index = '{0:07}'.format(n)
+        final_string = "OG" + str(index)
+        i = sorted(i)
+        for j in seqID:
+            j = [k for k in i if j in k]
+            j_s = ','.join(j)
+            final_string = final_string + "\t" + j_s
+        handle.write(final_string + '\n')
+"""
 
 
 
