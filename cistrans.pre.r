@@ -25,7 +25,7 @@ type$note[ type$Maxxa==0 & type$TX2094 ==1 & (type$F1==0 |type$F1=="0,0") ] <- "
 type$note[ type$Maxxa == type$TX2094 & type$Maxxa==0 ] <- "F1 unique1"
 type$note[ type$Maxxa ==1 & type$TX2094==0 & (type$F1=="1,0" )] <- "allele diagnostic"
 type$note[ type$Maxxa ==0 & type$TX2094==1 & (type$F1=="1,0" )] <- "allele diagnostic"
-type$note[ type$Maxxa ==1 & type$TX2094==0 & (type$F1==1)] <- "allele diagnostic: xaxxa allele in F1"
+type$note[ type$Maxxa ==1 & type$TX2094==0 & (type$F1==1)] <- "allele diagnostic: maxxa allele in F1"
 type$note[ type$Maxxa ==0 & type$TX2094==1 & (type$F1==1)] <- "allele diagnostic: tx2094 allele in F1"
 
 bg<-aggregate(type$Freq,list(type$note),sum)
@@ -35,7 +35,7 @@ bg
 #                                  Group.1      x   percentage
 # 1                      allele diagnostic  90614 0.1431708874
 # 2 allele diagnostic: tx2094 allele in F1    305 0.0004819026
-# 3  allele diagnostic: xaxxa allele in F1     98 0.0001548408
+# 3  allele diagnostic: maxxa allele in F1     98 0.0001548408
 # 4                                 common  50876 0.0803845109
 # 5                             F1 unique1 258868 0.4090136323
 # 6                          Maxxa unique1   8014 0.0126621879
@@ -56,7 +56,7 @@ x$note[ x$Maxxa==1 & x$TX2094 ==0 & (x$F1==0 |x$F1=="0,0") ] <- "Maxxa unique1"
 x$note[ x$Maxxa==0 & x$TX2094 ==1 & (x$F1==0 |x$F1=="0,0") ] <- "TX2094 unique1"
 x$note[ x$Maxxa == x$TX2094 & x$Maxxa==0 ] <- "F1 unique1"
 x$note[ x$Maxxa ==1 & x$TX2094==0 & (x$F1=="1,0" | x$F1==1)] <- "allele diagnostic: Maxxa"
-x$note[ x$Maxxa ==0 & x$TX2094==1 & (x$F1=="1,0" | x$F1==1)] <- "allele diag0550nostic: tx2094"
+x$note[ x$Maxxa ==0 & x$TX2094==1 & (x$F1=="1,0" | x$F1==1)] <- "allele diagnostic: tx2094"
 
 length(unique(x$GENE))
 # No. of genes contain SNPs 50500
@@ -86,6 +86,7 @@ alleleM  <- data.frame(gene=y$GENE)    # Maxxa
 alleleMn <- data.frame(gene=y$GENE)    # Maxxa + Maxxa.N; N refers to F1 unique SNPs
 alleleT  <- data.frame(gene=y$GENE)    # TX2094
 alleleTn <- data.frame(gene=y$GENE)    # TX2094
+readT <- 0
 for(file in fileL){
     ac <- read.table(file,header=TRUE,sep="\t")
     tag<-gsub("-",".",gsub(".*F1[.]|.read.summary.txt","",file))
@@ -93,11 +94,22 @@ for(file in fileL){
     alleleMn[,tag]  <- ac$Maxxa + ac$Maxxa.N
     alleleT[,tag]   <- ac$TX2094
     alleleTn[,tag]  <- ac$TX2094 + ac$TX2094.N
+    readT=readT+sum(ac[,-1])
 }
+readT # 150638950
 sum(alleleM[,-1]) # No. of reads containing only Maxxa diagnostic SNPs 9552667
 sum(alleleMn[,-1]) # No. of reads containing Maxxa and F1 diagnostic SNPs ** 11332177
 sum(alleleTn[,-1]) # No. of reads containing TX2094 and F1 diagnostic SNPs ** 11657761
 sum(alleleT[,-1]) # No. of reads containing TX2094 diagnostic SNPs 9894554
+# aggregate per F1 sample
+for(file in fileL){
+    ac <- read.table(file,header=TRUE,sep="\t")
+    tag<-gsub("-",".",gsub(".*F1[.]|.read.summary.txt","",file))
+    if(!exists("F1readSummary")){F1readSummary = c(tag,colSums(ac[,-1]))}else{F1readSummary = rbind(F1readSummary,c(tag,colSums(ac[,-1])))}
+}
+rownames(F1readSummary) = F1readSummary[,1]
+F1readSummary<-as.data.frame(F1readSummary[,-1])
+write.table(F1readSummary,file="F1readSummary.txt",sep="\t")
 
 # check genes without allelic counts
 check<-alleleMn$gene[rowSums(cbind(alleleMn[,-1],alleleTn[,-1]))>0]
