@@ -17,7 +17,7 @@ names(ref) = gsub(" .*","", names(ref))
 # get ref AA sequence
 
 # get alt sequence
-library(svMisc
+library(svMisc)
 ## maxxa
 IDs = as.character(unique(snps$GENE[snps$Maxxa==1]))
 nucM = ref
@@ -217,19 +217,53 @@ dev.off()
 
 
 
-################################
-## check promoter SNP pattern ##
-################################
+##################################
+## check Coding seq SNP pattern ##
+##################################
 
-# GATK generated SNP and INDEL between Maxxa and TX2094 over 2kb promoter region
-# HyLiTE generated SNPs of transcripts
-# Sequence divergence was calculated as snps/site.
+# GATK generated SNP and INDEL between Maxxa and TX2094
+# /work/LAS/jfw-lab/djyuan/Maxxa_TX2094/SNP/snpEff/AtDt26.PolyAll.snpEff.vcf
 ######## Unix command ###########
 ## snps
-#cd /lss/research/jfw-lab/Projects/AD1_domestication_cistrans/promoterSNP_djyuan/SNP
-#grep -v '^$\|^\s*#' *vcf | cut -f10,11,12 | sed 's/:\S*//g' |sort|uniq -c >pattern.txt
-#sed -i 's/^ *//g' pattern.txt
-#sed -i 's/ /\t/g' pattern.txt
+# cp /work/LAS/jfw-lab/djyuan/Maxxa_TX2094/SNP/snpEff/AtDt26.PolyAll.snpEff.vcf AtDt26.PolyAll.snpEff.vcf
+
+# grep -v '^$\|^\s*#' AtDt26.PolyAll.snpEff.vcf | cut -f8 |cut -d "|" -f2 |sort|uniq -c
+#         47260 3_prime_UTR_variant
+#          3638 5_prime_UTR_premature_start_codon_gain_variant
+#         23037 5_prime_UTR_variant
+#        379244 downstream_gene_variant
+#            28 initiator_codon_variant
+#             1 initiator_codon_variant&splice_region_variant
+#       8670127 intergenic_region
+#        225951 intron_variant
+#         91943 missense_variant
+#          1438 missense_variant&splice_region_variant
+#           555 splice_acceptor_variant&intron_variant
+#             5 splice_acceptor_variant&splice_donor_variant&intron_variant
+#             1 splice_acceptor_variant&splice_region_variant&intron_variant
+#           404 splice_donor_variant&intron_variant
+#             2 splice_donor_variant&splice_region_variant&intron_variant
+#           886 splice_region_variant
+#          6970 splice_region_variant&intron_variant
+#            25 splice_region_variant&stop_retained_variant
+#           886 splice_region_variant&synonymous_variant
+#           168 start_lost
+#             3 start_lost&splice_region_variant
+#          1847 stop_gained
+#            37 stop_gained&splice_region_variant
+#           211 stop_lost
+#            80 stop_lost&splice_region_variant
+#           103 stop_retained_variant
+#         53989 synonymous_variant
+#        533389 upstream_gene_variant
+
+
+# grep -v '^$\|^\s*#' AtDt26.PolyAll.snpEff.vcf | cut -f10,11,12 | sed 's/:\S*//g' |sort|uniq -c >pattern.txt
+# sed -i 's/^ *//g' pattern.txt
+# sed -i 's/ /\t/g' pattern.txt
+
+---book
+
 #grep 'upstream' *vcf | cut -f8,10,11,12 | sed 's/:\S*//g' | sed 's/.*R[|]//g' >promoterSNPs.txt
 ## indels
 #cd /lss/research/jfw-lab/Projects/AD1_domestication_cistrans/promoterSNP_djyuan/InDel
@@ -318,174 +352,3 @@ t.indel.size = with(x[(x$V4=="0/0"&x$V6=="1/1")|(x$V6=="0/0"&x$V4=="1/1"),],aggr
 dim(t.indel) # 48284     2
 dim(t.indel.size) # 23683
 
-
-#########################
-## Sequence divergence ##
-#########################
-
-len = read.table("Genes66610.gene.length.txt",header=TRUE,sep="\t")
-# coding seq
-load("seqKaKs.rdata")
-rownames(paml)=paml$id
-exon = as.data.frame(table(snps$GENE))
-syn = as.data.frame(table(snps$GENE[snps$MvsT=="syn"]))
-nonsyn = as.data.frame(table(snps$GENE[snps$MvsT=="nonsyn"]))
-seqDev =data.frame(ID=rownames(len), len=len$x, exon =0, syn=0, nonsyn=0, s = 0, t = 0, s.indel = 0, t.indel = 0, s.indel.size = 0, t.indel.size = 0)
-seqDev$exon[match(exon$Var1,rownames(len))] = exon$Freq
-seqDev$syn[match(syn$Var1,rownames(len))] = syn$Freq
-seqDev$nonsyn[match(nonsyn$Var1,rownames(len))] = nonsyn$Freq
-seqDev$s[match(paste0(s$Var1,".1"),rownames(len))] = s$Freq
-seqDev$t[match(paste0(t$Var1,".1"),rownames(len))] = t$Freq
-seqDev$s.indel[match(paste0(s.indel$Var1,".1"),rownames(len))] = s.indel$Freq
-seqDev$t.indel[match(paste0(t.indel$Var1,".1"),rownames(len))] = t.indel$Freq
-seqDev$s.indel.size[match(paste0(s.indel.size$Group.1,".1"),rownames(len))] = s.indel.size$x
-seqDev$t.indel.size[match(paste0(t.indel.size$Group.1,".1"),rownames(len))] = t.indel.size$x
-colSums(seqDev[,-1])
-#    len         exon           syn        nonsyn            s            t
-# 81346143        91017        30405        60612       340642       171196
-# s.indel      t.indel s.indel.size t.indel.size
-# 88137        47561       274420       145999
-
-# number of SNPs per KB
-perKB = data.frame(ID=rownames(len), promoter = seqDev$s/2, coding = seqDev$exon/seqDev$len*1000, syn=seqDev$syn/seqDev$len*1000, nonyn=seqDev$nonsyn/seqDev$len*1000)
-save(s, s.indel, s.indel.size, t, t.indel, t.indel.size, seqDev,perKB, file="seqDivergence.rdata")
-
-####################################################
-## relate to expression and regulatory divergence ##
-####################################################
-load("cistrans.rdata")
-load("RDgenes.rdata")
-load("seqDivergence.rdata")
-load("paml/paml.rdata")
-panel.cor <- function(x, y, digits=2, prefix="", cex.cor, ...)
-{
-    usr <- par("usr"); on.exit(par(usr))
-    par(usr = c(0, 1, 0, 1))
-    r <- abs(cor(x, y, use="complete.obs"))
-    txt <- format(c(r, 0.123456789), digits=digits)[1]
-    txt <- paste(prefix, txt, sep="")
-    if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
-    text(0.5, 0.5, txt, cex = cex.cor * r)
-}
-
-## restrict to 27816 genes
-S <- perKB[,-1]
-rownames(S)<-perKB$ID
-S <- S[rownames(res.mt10),]
-summary(S)
-#    promoter          coding              syn              nonyn
-# Min.   : 0.000   Min.   : 0.08708   Min.   : 0.0000   Min.   : 0.0000
-# 1st Qu.: 1.000   1st Qu.: 1.06667   1st Qu.: 0.0000   1st Qu.: 0.6173
-# Median : 2.500   Median : 1.92234   Median : 0.4845   Median : 1.2820
-# Mean   : 2.919   Mean   : 2.89832   Mean   : 0.8814   Mean   : 2.0169
-# 3rd Qu.: 4.000   3rd Qu.: 3.44353   3rd Qu.: 1.1779   3rd Qu.: 2.4783
-# Max.   :56.000   Max.   :55.55556   Max.   :41.0256   Max.   :47.2222
-S <- seqDev[,-1]
-rownames(S)<-seqDev$ID
-S <- S[rownames(res.mt10),]
-cor(S)
-#                       len       exon        syn     nonsyn            s
-# len           1.000000000 0.30318868 0.27258562 0.24691138 -0.001791317
-# exon          0.303188679 1.00000000 0.78311467 0.89685326  0.100279754
-# syn           0.272585618 0.78311467 1.00000000 0.42726508  0.105524283
-# nonsyn        0.246911379 0.89685326 0.42726508 1.00000000  0.070736152
-# s            -0.001791317 0.10027975 0.10552428 0.07073615  1.000000000
-# t             0.001266761 0.08110698 0.07977210 0.06117849  0.568157609
-# s.indel       0.012226490 0.05980101 0.06569720 0.04021363  0.480819723
-# t.indel       0.003421127 0.04713048 0.04739654 0.03480925  0.300853688
-# s.indel.size -0.003946621 0.04007805 0.04549912 0.02590556  0.284619820
-# t.indel.size -0.009138237 0.03697253 0.03762113 0.02699400  0.188698245
-#                        t    s.indel     t.indel s.indel.size t.indel.size
-# len          0.001266761 0.01222649 0.003421127 -0.003946621 -0.009138237
-# exon         0.081106981 0.05980101 0.047130478  0.040078050  0.036972533
-# syn          0.079772104 0.06569720 0.047396543  0.045499116  0.037621131
-# nonsyn       0.061178486 0.04021363 0.034809249  0.025905562  0.026994000
-# s            0.568157609 0.48081972 0.300853688  0.284619820  0.188698245
-# t            1.000000000 0.29704998 0.624170559  0.175654643  0.383195528
-# s.indel      0.297049981 1.00000000 0.598521888  0.528051211  0.343329059
-# t.indel      0.624170559 0.59852189 1.000000000  0.316798781  0.575797031
-# s.indel.size 0.175654643 0.52805121 0.316798781  1.000000000  0.607360272
-# t.indel.size 0.383195528 0.34332906 0.575797031  0.607360272  1.000000000
-
-pdf("seqDivergence.pdf")
-textplot(cor(S))
-mtext("correlation seen between SAMN and TX2094; no correlation seen between promoter and transcript")
-
-### correlation seen between SAMN and TX2094; no correlation seen between promoter and transcript
-rownames(paml)=paml$id
-R=paml[rownames(res.mt10),]
-S$dNdS=R$"dN/dS"
-S$dS=R$"dS"
-S$dN=R$"dN"
-
-
-## sequence divergence NOT correlate with expression and regulatory divergence
-#par(mfrow=c(3,2))
-sumR=c("dataset","expression","seq.divergence","cor")
-for(l in c("res10","res20","res.mt10","res.mt20","res.tm10","res.tm20")){
-    res= get(l)
-    for(d in c("A","B")){
-        for(c in 2:10){
-            # plot(S[,c],abs(res[,d]),xlab=names(S)[c])
-            r=cor(S[,c],abs(res[,d]),use="pairwise.complete.obs")
-            sumR=rbind(sumR,(c(l,d,names(S)[c],r)))
-        }
-    }
-}
-# plot results
-quantile(as.numeric(sumR[-1,4]))
-# 0%          25%          50%          75%         100%
-# -0.095031539  0.001279356  0.015264594  0.029956103  0.046609987 
-textplot(sumR)
-mtext("sequence divergence NOT correlate with expression and regulatory divergence")
-
-
-## promoter SNPs
-c=S$s
-quantile(c,(1:10)/10)
-# 10%  20%  30%  40%  50%  60%  70%  80%  90% 100%
-# 0    1    3    4    5    6    8    9   12  112  # 90% less than 13
-c[c>12]=13
-table(c)
-cName<-c(as.character(0:12),">12")
-# |A| parental divergence
-boxplot(abs(res.mt10$A)~c, axes = FALSE, xlab="Number of SNPs in promoter (2kb)", main="|A|");axis(2);axis(1,1:14, labels=cName);abline(h=median(abs(res.mt10$A),na.rm=TRUE),col="blue");text(2,10,paste0("median = ",round(median(abs(res.mt10$A),na.rm=TRUE),3)),col="blue")
-# |B| cis divergence
-boxplot(abs(res.mt10$B)~c, axes = FALSE, xlab="Number of SNPs in promoter (2kb)", main="|B|");axis(2);axis(1,1:14, labels=cName);abline(h=median(abs(res.mt10$B),na.rm=TRUE),col="blue");text(2,10,paste0("median = ",round(median(abs(res.mt10$B),na.rm=TRUE),3)),col="blue")
-# |B|/(|AminusB|+|B|)
-boxplot((abs(res.mt10$B)/(abs(res.mt10$B)+abs(res.mt10$AminusB)))~c, axes = FALSE, xlab="Number of SNPs in promoter (2kb)", main="cis%");axis(2);axis(1,1:14, labels=cName);abline(h=0.5,col="red")
-
-##
-S$rd = NA
-S[rownames(rd),"rd"] = rd$rd
-library(agricolae)
-out=duncan.test(aov(s~rd,data=S),"rd", console=TRUE)
-plot(out,variation="SE", main="Promoter SNPs of RD genes")
-out=duncan.test(aov(s.indel~rd,data=S),"rd", console=TRUE)
-plot(out,variation="SE",main="Promoter Indels of RD genes")
-out=duncan.test(aov(exon~rd,data=S),"rd", console=TRUE)
-plot(out,variation="SE",main="Coding sequence SNPs (per kb) of RD genes")
-out=duncan.test(aov(syn~rd,data=S),"rd",main="Snonymous SNPs (per kb) of RD genes", console=TRUE)
-plot(out,variation="SE",main="Snonymous SNPs (per kb) of RD genes")
-out=duncan.test(aov(nonsyn~rd,data=S),"rd", console=TRUE)
-plot(out,variation="SE",main="Nonsynonymous SNPs (per kb) of RD genes")
-S$rate=S$nonsyn/S$syn
-summary(S$rate[is.finite(S$rate)])
-# Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
-# 0.000   0.000   1.000   1.387   2.000  26.000
-S$rate[!is.finite(S$rate)]=30
-out=duncan.test(aov(rate~rd,data=S),"rd", console=TRUE) #NULL, aov not s
-plot(out,variation="SE",main="Na/Ns of RD genes")
-
-out=duncan.test(aov(dNdS~rd,data=S),"rd", console=TRUE) #NULL, aov not s
-plot(out,variation="SE",main="Ka/Ks of RD genes")
-out=duncan.test(aov(dN~rd,data=S),"rd", console=TRUE) #NULL, aov not s
-plot(out,variation="SE",main="Ka of RD genes")
-out=duncan.test(aov(dS~rd,data=S),"rd", console=TRUE) #NULL, aov not s
-plot(out,variation="SE",main="Ks of RD genes")
-dev.off()
-# relate seq divergence with seven category, see 'boxplotByCategory.r'
-
-ks.test(S$dN[S$rd=="no divergence"], S$dN[S$rd!="no divergence"])
-ks.test(S$dS[S$rd=="no divergence"], S$dS[S$rd!="no divergence"])
-ks.test(S$dNdS[S$rd=="no divergence"], S$dNdS[S$rd!="no divergence"])

@@ -53,8 +53,8 @@ count = cbind(countAll[,mt10],mid10);head(count)
 info = data.frame(sample=names(count), genome = gsub("[.].*","",names(count)))
 dds <- DESeqDataSetFromMatrix( countData = round(count,0), colData =info, design = ~ genome)
 res = results(DESeq(dds),contrast=c("genome","F1","mid"))
-print( summary(res,alpha=.05) ) # higher F1 4643, Mid 4382
-write.table(res, file="DE-27816/MxT.10dpavsMid.10dpa.txt",  sep="\t")
+print( summary(res,alpha=.05) ) # higher F1 4643, Mid 4381
+write.table(res, file="DE-27816-mar2019/MxT.10dpavsMid.10dpa.txt",  sep="\t")
 
 # TxM.10dpa vs mid10
 count = cbind(countAll[,tm10],mid10);head(count)
@@ -62,7 +62,7 @@ info = data.frame(sample=names(count), genome = gsub("[.].*","",names(count)))
 dds <- DESeqDataSetFromMatrix( countData = round(count,0), colData =info, design = ~ genome)
 res = results(DESeq(dds),contrast=c("genome","F1","mid"))
 print( summary(res,alpha=.05) ) # higher F1 2839, Mid 2497
-write.table(res, file="DE-27816/TxM.10dpavsMid.10dpa.txt",  sep="\t")
+write.table(res, file="DE-27816-mar2019/TxM.10dpavsMid.10dpa.txt",  sep="\t")
 
 # MxT.20dpa vs mid20
 count = cbind(countAll[,mt20],mid20);head(count)
@@ -70,7 +70,7 @@ info = data.frame(sample=names(count), genome = gsub("[.].*","",names(count)))
 dds <- DESeqDataSetFromMatrix( countData = round(count,0), colData =info, design = ~ genome)
 res = results(DESeq(dds),contrast=c("genome","F1","mid"))
 print( summary(res,alpha=.05) ) # higher F1 1946, Mid 1713
-write.table(res, file="DE-27816/MxT.20dpavsMid.20dpa.txt",  sep="\t")
+write.table(res, file="DE-27816-mar2019/MxT.20dpavsMid.20dpa.txt",  sep="\t")
 
 # TxM.20dpa vs mid20
 count = cbind(countAll[,tm20],mid20);head(count)
@@ -78,7 +78,7 @@ info = data.frame(sample=names(count), genome = gsub("[.].*","",names(count)))
 dds <- DESeqDataSetFromMatrix( countData = round(count,0), colData =info, design = ~ genome)
 res = results(DESeq(dds),contrast=c("genome","F1","mid"))
 print( summary(res,alpha=.05) ) # higher F1 5239, Mid 4955
-write.table(res, file="DE-27816/TxM.20dpavsMid.20dpa.txt",  sep="\t")
+write.table(res, file="DE-27816-mar2019/TxM.20dpavsMid.20dpa.txt",  sep="\t")
 
 
 ###################################
@@ -142,25 +142,25 @@ classDominance<-function(TvsMid, TvsP1, TvsP2, P1vsP2, log2fc.threshold=0, rever
 }
 
 ### Get Parents vs F1
-MvsMT10<-read.table("DE-27816/Maxxa.10dpavsMxT.10dpa.txt", header=TRUE, sep="\t")
-TvsMT10<-read.table("DE-27816/TX2094.10dpavsMxT.10dpa.txt", header=TRUE, sep="\t")
+MvsMT10<-read.table("DE-27816-mar2019/Maxxa.10dpavsMxT.10dpa.txt", header=TRUE, sep="\t")
+TvsMT10<-read.table("DE-27816-mar2019/TX2094.10dpavsMxT.10dpa.txt", header=TRUE, sep="\t")
 #
-MvsTM10<-read.table("DE-27816/Maxxa.10dpavsTxM.10dpa.txt", header=TRUE, sep="\t")
-TvsTM10<-read.table("DE-27816/TX2094.10dpavsTxM.10dpa.txt", header=TRUE, sep="\t")
+MvsTM10<-read.table("DE-27816-mar2019/Maxxa.10dpavsTxM.10dpa.txt", header=TRUE, sep="\t")
+TvsTM10<-read.table("DE-27816-mar2019/TX2094.10dpavsTxM.10dpa.txt", header=TRUE, sep="\t")
 #
-MvsMT20<-read.table("DE-27816/Maxxa.20dpavsMxT.20dpa.txt", header=TRUE, sep="\t")
-TvsMT20<-read.table("DE-27816/TX2094.20dpavsMxT.20dpa.txt", header=TRUE, sep="\t")
+MvsMT20<-read.table("DE-27816-mar2019/Maxxa.20dpavsMxT.20dpa.txt", header=TRUE, sep="\t")
+TvsMT20<-read.table("DE-27816-mar2019/TX2094.20dpavsMxT.20dpa.txt", header=TRUE, sep="\t")
 #
-MvsTM20<-read.table("DE-27816/Maxxa.20dpavsTxM.20dpa.txt", header=TRUE, sep="\t")
-TvsTM20<-read.table("DE-27816/TX2094.20dpavsTxM.20dpa.txt", header=TRUE, sep="\t")
+MvsTM20<-read.table("DE-27816-mar2019/Maxxa.20dpavsTxM.20dpa.txt", header=TRUE, sep="\t")
+TvsTM20<-read.table("DE-27816-mar2019/TX2094.20dpavsTxM.20dpa.txt", header=TRUE, sep="\t")
 # get F1 vs Mid
-MT10vsMid<-read.table("DE-27816/MxT.10dpavsMid.10dpa.txt", header=TRUE, sep="\t")
-TM10vsMid<-read.table("DE-27816/TxM.10dpavsMid.10dpa.txt", header=TRUE, sep="\t")
-MT20vsMid<-read.table("DE-27816/MxT.20dpavsMid.20dpa.txt", header=TRUE, sep="\t")
-TM20vsMid<-read.table("DE-27816/TxM.20dpavsMid.20dpa.txt", header=TRUE, sep="\t")
+MT10vsMid<-read.table("DE-27816-mar2019/MxT.10dpavsMid.10dpa.txt", header=TRUE, sep="\t")
+TM10vsMid<-read.table("DE-27816-mar2019/TxM.10dpavsMid.10dpa.txt", header=TRUE, sep="\t")
+MT20vsMid<-read.table("DE-27816-mar2019/MxT.20dpavsMid.20dpa.txt", header=TRUE, sep="\t")
+TM20vsMid<-read.table("DE-27816-mar2019/TxM.20dpavsMid.20dpa.txt", header=TRUE, sep="\t")
 # get P1 vs P2
-MvsT10<-read.table("DE-27816/Maxxa.10dpavsTX2094.10dpa.txt", header=TRUE, sep="\t")
-MvsT20<-read.table("DE-27816/Maxxa.20dpavsTX2094.20dpa.txt", header=TRUE, sep="\t")
+MvsT10<-read.table("DE-27816-mar2019/Maxxa.10dpavsTX2094.10dpa.txt", header=TRUE, sep="\t")
+MvsT20<-read.table("DE-27816-mar2019/Maxxa.20dpavsTX2094.20dpa.txt", header=TRUE, sep="\t")
 
 # categorization of inheritance mode
 im.mt10 = classDominance(MT10vsMid, MvsMT10, TvsMT10, MvsT10, log2fc.threshold=0, reverseTvsP=TRUE,Pnames=c("Maxxa","TX2094"))
@@ -171,48 +171,49 @@ im.tm20 = classDominance(TM20vsMid, MvsTM20, TvsTM20, MvsT20, log2fc.threshold=0
 save(im.mt10, im.tm10, im.mt20, im.tm20, file="inheritance.rdata")
 
 # between reciprocal F1s, not as consistent as regulatory categories
-table(im.mt10$category==im.tm10$category) # 9453 T-18972
-table(im.mt20$category==im.tm20$category) # 9621 T-18943
+table(im.mt10$category==im.tm10$category) # 8985 T-18831
+table(im.mt20$category==im.tm20$category) # 8861 T-18955
 
-# summarize category
-im=data.frame(ID=rownames(im.mt10), mt10=im.mt10$category, tm10=im.tm10$category, mt20=im.mt20$category,tm20=im.tm20$category)
+# summarize category only for A!=0
 class=sort(unique(matrix(apply(im[,-1],2,as.character))))
-sumT=data.frame(mt10=as.numeric(table(im$mt10)[class]), tm10=as.numeric(table(im$tm10)[class]),mt20=as.numeric(table(im$mt20)[class]),tm20=as.numeric(table(im$tm20)[class]))
+sumT=data.frame(mt10=as.numeric(table(im.mt10$category[im.mt10$P1vsP2.reg!="P1=P2"])[class]), tm10=as.numeric(table(im.tm10$category[im.tm10$P1vsP2.reg!="P1=P2"])[class]), 
+mt20=as.numeric(table(im.mt20$category[im.mt20$P1vsP2.reg!="P1=P2"])[class]), 
+tm20=as.numeric(table(im.tm20$category[im.tm20$P1vsP2.reg!="P1=P2"])[class]))
 rownames(sumT)=class
 sumT[is.na(sumT)]=0
+sumT$all =rowSums(sumT)
 print(sumT)
-write.table(sumT, file ="inheritance.summary.txt",sep="\t")
-
-# proportion of additivity, dominance and transgression
-sumP<-round(sweep(sumT[1:9,],2,colSums(sumT[1:9,]),"/")*100,1)
-sumP$all <- round(rowSums(sumT)[1:9]/sum(rowSums(sumT)[1:9])*100,1)
+# percentage
+sumP<-round(sweep(sumT,2,colSums(sumT),"/")*100,1)
+names(sumP) = paste0(names(sumP),"%")
+write.table(cbind(sumT,sumP), file ="inheritance.summary.txt",sep="\t")
 sumP[1,]
-#              mt10 tm10 mt20 tm20  all
-# 1.Additivity 59.5 70.5 75.4 40.7 61.6
 colSums(sumP[2:5,])
-# mt10 tm10 mt20 tm20  all
-# 38.8 25.5 24.3 47.4 33.9
 colSums(sumP[6:9,])
-# mt10 tm10 mt20 tm20  all
-# 1.9  4.2  0.3 11.9  4.4
-p<-abs(x$B)/(abs(x$AminusB)+abs(x$B))
 
-
-# bin genes by A to 6 classes
-REs<-c(res.mt10$category,res.tm10$category,res.mt20$category,res.tm20$category)
-IMs<-c(im.mt10$category,im.tm10$category,im.mt20$category,im.tm20$category)
-As<-c(im.mt10$P1vsP2,im.tm10$P1vsP2,im.mt20$P1vsP2,im.tm20$P1vsP2)
-breaks <- quantile(abs(As),na.rm=TRUE)
-c<-.bincode(x=abs(As), b=breaks, TRUE)
-xtabs(~IMs+c)
-barplot(xtabs(~IMs+c))
-## with increased expression divergence between Maxxa and TX2094, the proportion of additivity
 
 ############################################
 ## Relate cis trans with inheritance mode ##
 ############################################
 load("cistrans.rdata")
 
+### Does the composition of inheritance mode change with increased parental expression divergence?
+REs<-c(res.mt10$category,res.tm10$category,res.mt20$category,res.tm20$category)
+IMs<-c(im.mt10$category,im.tm10$category,im.mt20$category,im.tm20$category)
+As<-c(im.mt10$P1vsP2,im.tm10$P1vsP2,im.mt20$P1vsP2,im.tm20$P1vsP2)
+reg<-c(im.mt10$P1vsP2.reg,im.tm10$P1vsP2.reg,im.mt20$P1vsP2.reg,im.tm20$P1vsP2.reg)
+select = which(reg!="P1=P2")
+breaks <- c(0, 1, 2, 3, 4, 100)
+c<-.bincode(x=abs(As[select]), b=breaks, TRUE)
+cName<-c("(0-1)","(1-2)","(2-3)","(3-4)","(4+)")
+res= as.matrix(table(IMs[select],c))
+pdf("inheritance.with|A|.pdf")
+barplot(res)
+barplot(round(sweep(res,2,colSums(res),"/")*100,1) )
+dev.off()
+# smaller portion of dominance??? not clear
+
+# FUN
 plotCorrespondence=function(c1,c2,file=NULL,title="", textplot=TRUE,corrplot=TRUE,fisherplot=TRUE,fisher="greater", mai=c(1.02, 0.82,0.82,0.42))
 {
     if(!is.null(file)){pdf(file)}

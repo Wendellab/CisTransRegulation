@@ -347,6 +347,8 @@ k.maxxa = cbind(k,kme)
 
 save(list=c( "multiExpr","shortLabels","nSets", "iTOMs", "cnet", "clust",grep("inet.",ls(), value=TRUE),"k.tx2094","k.maxxa"), file = "buildNetwork.rdata")
 collectGarbage()
+write.table(k.maxxa,file="connectivity.maxxa.txt", sep="\t",row.names=FALSE)
+write.table(k.tx2094,file="connectivity.tx2094.txt", sep="\t",row.names=FALSE)
 
 ###### preservation test Maxxa against TX2094
 # The number of permutations drives the computation time of the module preservation function. For a publication use 200 permutations.
@@ -475,7 +477,8 @@ quantile(linkList$weight, 1:10/10)
 # 0.00037575590 0.00056881689 0.00088935127 0.00169343318 0.04243262159
 linksT = linkList
 ######## Maxxa
-exprMatr <- t(multiExpr[[2]]$data)  # tx2094
+exprMatr <- t(multiExpr[[2]]$data)r
+
 exprMatr <- exprMatr[as.character(rd$ID),] # restrict to 27816 genes to speed up
 weightMat <- GENIE3(exprMatr, regulators=keyTFs)
 dim(weightMat)
@@ -498,8 +501,8 @@ dim(maxxa  <- linksM[linksM$weight>weight.cutoff,]) # 744458
 save(maxxa, tx2094, file="genie3.rdata")
 
 # Export genie3 network edges including only RD genes to cytoscape
-dim(mm <- maxxa[maxxa$targetGene%in%rd$ID[rd$rd!="no divergence"] & maxxa$regulatoryGene%in%rdTFs$ID,] ) #2055
-dim(tt <- tx2094[tx2094$targetGene%in%rd$ID[rd$rd!="no divergence"] & tx2094$regulatoryGene%in%rdTFs$ID,] ) #1680
+dim(mm <- maxxa[maxxa$targetGene%in%rd$ID[rd$rd!="no divergence"] & maxxa$regulatoryGene%in%rd$ID[rd$rd!="no divergence"],] ) #2055
+dim(tt <- tx2094[tx2094$targetGene%in%rd$ID[rd$rd!="no divergence"] & tx2094$regulatoryGene%in%rd$ID[rd$rd!="no divergence"],] ) #1680
 write.table(mm, row.names=FALSE, sep="\t",file="maxxa_rds_genie3_edges.txt",quote=FALSE)
 write.table(tt, row.names=FALSE, sep="\t",file="tx2094_rds_genie3_edges.txt",quote=FALSE)
 # Preppare node table with description
@@ -549,7 +552,9 @@ dim(node<-merge(node,map,by="ID",all.x=TRUE))
 # save
 write.table(node, row.names=FALSE, sep="\t",file="nodes.txt",quote=FALSE)
 
-
+# https://docs.google.com/spreadsheets/d/1usiKuEB4a20nHshE3zq4WRGEqCdP4CESel9kZBTRwxk/edit?usp=sharing
+x<-c("Gorai.004G212200.1","Gorai.007G023500.1","Gorai.010G177800.1","Gorai.010G090600.1","Gorai.008G179600.1","Gorai.004G196800.1","Gorai.004G196800.1","Gorai.004G125200.1","Gorai.011G155800.1","Gorai.003G114000.1","Gorai.012G041900.1","Gorai.007G350500.1","Gorai.001G131200.1","Gorai.009G237900.1","Gorai.009G172800.1","Gorai.006G196600.1","Gorai.012G186500.1","Gorai.012G061800.1","Gorai.007G036800.1","Gorai.008G250100.1","Gorai.010G185100.1","Gorai.001G096300.1","Gorai.007G063600.1","Gorai.007G060900.1","Gorai.009G104500.1","Gorai.001G163400.1","Gorai.004G211800.1","Gorai.010G253000.1","Gorai.011G228500.1","Gorai.011G128500.1","Gorai.006G119900.1","Gorai.008G007200.1","Gorai.007G132800.1","Gorai.008G293300.1","Gorai.002G218500.1","Gorai.003G108300.1","Gorai.009G182800.1","Gorai.003G088700.1","Gorai.008G036100.1","Gorai.009G052200.1","Gorai.001G089400.1","Gorai.001G089400.1","Gorai.012G147000.1","Gorai.005G134100.1","Gorai.007G057400.1","Gorai.011G212900.1","Gorai.011G128500.1","Gorai.008G181600.1","Gorai.013G022900.1","Gorai.011G212900.1","Gorai.007G159700.1","Gorai.004G282400.1","Gorai.010G026100.1","Gorai.011G037900.1","Gorai.004G057400.1","Gorai.004G206600.1","Gorai.004G142700.1","Gorai.004G125200.1","Gorai.012G001200.1","Gorai.004G196800.1","Gorai.009G135100.1","Gorai.009G135100.1","Gorai.002G121300.1","Gorai.006G241000.1","Gorai.006G241100.1","Gorai.004G057200.1","Gorai.011G174400.1","Gorai.002G083200")
+node[node$gorai %in% x & node$rd!="no divergence", ]
 
 # GO enrichment of rdTFs targets
 rdTFs$maxxaTGsGO =NA
@@ -579,11 +584,11 @@ m$qval =p.adjust(m$pval,"BH")
 
 # Maxxa vs TX2094: do in and out degree rank differ
 # all nodes
-with(node,wilcox.test(maxxaOut,tx2094Out,paired=TRUE))
-with(node,wilcox.test(maxxaIn,tx2094In,paired=TRUE))
+with(node,wilcox.test(maxxaOut,tx2094Out,paired=TRUE)) # p-value = 5.214e-07
+with(node,wilcox.test(maxxaIn,tx2094In,paired=TRUE)) #  p-value < 2.2e-16
 # TFs
-with(node[node$TF==TRUE,],wilcox.test(maxxaOut,tx2094Out,paired=TRUE))
-with(node[node$TF==TRUE,],wilcox.test(maxxaIn,tx2094In,paired=TRUE))
+with(node[node$TF==TRUE,],wilcox.test(maxxaOut,tx2094Out,paired=TRUE)) # p-value = 5.214e-07
+with(node[node$TF==TRUE,],wilcox.test(maxxaIn,tx2094In,paired=TRUE)) # p-value < 2.2e-16
 # RDs
 with(node[node$rd!="no divergence",],wilcox.test(maxxaOut,tx2094Out,paired=TRUE))
 with(node[node$rd!="no divergence",],wilcox.test(maxxaIn,tx2094In,paired=TRUE))
@@ -592,14 +597,33 @@ with(node[node$TF==TRUE & node$rd!="no divergence",],wilcox.test(maxxaOut,tx2094
 with(node[node$TF==TRUE & node$rd!="no divergence",],wilcox.test(maxxaIn,tx2094In,paired=TRUE))
 
 ## TFs that exhibit regulatory divergence are more likely to cause regulatory changes of their downstream target genes?
-rgn=maxxa
-TG = as.data.frame(table(rgn$regulatoryGene))
-rdTG = as.data.frame(table(rgn$regulatoryGene[maxxa$targetGene %in% rd$ID[rd$rd!="no divergence"]]))
-unique(TG$Var1==rdTG$Var1)
-df=data.frame(ID=TG$Var1,TG=TG$Freq,rdTG=rdTG$Freq, rd=rd[as.character(TG$Var1),"rd"])
+# more TGs, significant
+boxplot(maxxaOut~rd,data=node[node$TF==TRUE,])
+boxplot(tx2094Out~rd,data=node[node$TF==TRUE,])
+wilcox.test(node$maxxaOut[node$rd=="no divergence"&node$TF==TRUE], node$maxxaOut[node$rd!="no divergence"&node$TF==TRUE]) # W = 29976, p-value = 0.004778
+wilcox.test(node$tx2094Out[node$rd=="no divergence"&node$TF==TRUE], node$tx2094Out[node$rd!="no divergence"&node$TF==TRUE]) # W = 30486, p-value = 0.007834
+# more TGs that are TFs, not significant
+maxxa_tfs = maxxa[maxxa$targetGene%in%keyTFs,]
+node$maxxaOut_tf = sapply(node$ID,function(x)length(which(as.character(maxxa_tfs$regulatoryGene)==x)))
+tx2094_tfs = tx2094[tx2094$targetGene%in%keyTFs,]
+node$tx2094Out_tf = sapply(node$ID,function(x)length(which(as.character(tx2094_tfs$regulatoryGene)==x)))
+boxplot(maxxaOut_tf~rd,data=node[node$TF==TRUE,])
+boxplot(tx2094Out_tf~rd,data=node[node$TF==TRUE,])
+wilcox.test(node$maxxaOut_tf[node$rd=="no divergence"&node$TF==TRUE], node$maxxaOut_tf[node$rd!="no divergence"&node$TF==TRUE]) # W = 32780, p-value = 0.05387
+wilcox.test(node$tx2094Out_tf[node$rd=="no divergence"&node$TF==TRUE], node$tx2094Out_tf[node$rd!="no divergence"&node$TF==TRUE]) # W = 33278, p-value = 0.07684
 
- wilcox.test(df$rdTG[df$rd=="no divergence"], df$rdTG[df$rd!="no divergence"])
- wilcox.test(df$TG[df$rd=="no divergence"], df$TG[df$rd!="no divergence"])
+#####################
+## RD vs Ref genes ##
+#####################
+library(gdata)
+ref=read.xls("~/Downloads/Cotton Fiber Genes with Functional Characterization031519.xlsx", sheet=2, pattern="Gene name", na.strings=c("","NA"))
+ref=ref[1:78,c(1:3,5:7)]
+node = read.table("~/Downloads/nodes.txt",header=TRUE, sep="\t")
+nrd= node[node$rd!="no divergence",]
+# are there any known fiber genes detected as RD
+ref[ref$Gorai %in% as.character(nrd$gorai) & !is.na(ref$Gorai),]  # no intersection by Gorai
+ref[ref$Gohir.A..Jeff.Chen. %in% as.character(nrd$ID) & !is.na(ref$Gohir.A..Jeff.Chen.),]  # no intersection by Gohir.A
+ref[ref$Gohir.D %in% as.character(nrd$ID) & !is.na(ref$Gohir.D),]  # no intersection by Gohir.A
 
 
 
@@ -658,6 +682,7 @@ for(i in 1:100){
     rids=as.character(sample(rd$ID,no))
     den=c(den, getDensity(expr[,rids],power=20) )
 }
+m<-den
 m[1];quantile(m[-1])
 # [1] 0.009868543
 # 0%         25%         50%         75%        100%
@@ -670,43 +695,14 @@ expr2= multiExpr[[2]]$data # maxxa
 tx2094 = c(getDensity(expr1[,as.character(rd$ID)], power=20), getDensity(expr1[,as.character(rd$ID[rd$rd=="no divergence"])],power=20), getDensity(expr1[,as.character(rd$ID[rd$rd!="no divergence"])],power=20), getDensity(expr1[,as.character(rd$ID[rd$rd=="cis only"])],power=20), getDensity(expr1[,as.character(rd$ID[rd$rd=="cis and trans"])],power=20), getDensity(expr1[,as.character(rd$ID[rd$rd=="trans only"])],power=20) )
 maxxa = c(getDensity(expr2[,as.character(rd$ID)], power=20), getDensity(expr2[,as.character(rd$ID[rd$rd=="no divergence"])],power=20), getDensity(expr1[,as.character(rd$ID[rd$rd!="no divergence"])],power=20), getDensity(expr2[,as.character(rd$ID[rd$rd=="cis only"])],power=20), getDensity(expr2[,as.character(rd$ID[rd$rd=="cis and trans"])],power=20), getDensity(expr2[,as.character(rd$ID[rd$rd=="trans only"])],power=20) )
 density = data.frame(subnetwork = clab,tx2094,maxxa)
+#   subnetwork      tx2094       maxxa
+# 1        all 0.009124847 0.006084076
+# 2     non-RD 0.008742397 0.005955358
+# 3         RD 0.018972749 0.018972749
+# 4   cis_only 0.018988961 0.008200147
+# 5  cis&trans 0.018073715 0.011468430
+# 6 trans_only 0.031449437 0.012620720
 
-# 0.008742397 0.018988961 0.018073715 0.031449437, only trans only above overall RD desnisty
-expr= multiExpr[[2]]$data # maxxa
-c(getDensity(expr[,as.character(rd$ID[rd$rd=="no divergence"])],power=20), getDensity(expr[,as.character(rd$ID[rd$rd=="cis only"])],power=20), getDensity(expr[,as.character(rd$ID[rd$rd=="cis and trans"])],power=20), getDensity(expr[,as.character(rd$ID[rd$rd=="trans only"])],power=20) )
-# 0.005955358 0.008200147 0.011468430 0.012620720
-
-#
-
-expr= multiExpr[[2]]$data #maxxa
-getNetConcept(expr[,as.character(rd$ID[rd$rd=="trans only"])],power=20) # 0.01262072     0.05278882     1.14557756
-getNetConcept(expr[,as.character(rd$ID[rd$rd=="cis only"])],power=20) # 0.008200147    0.028780244    1.030490529
-table(rd$rd)
-# cis and trans      cis only no divergence    trans only
-#       841           513         26161           301
-den=data.frame(nrd=getNetConcept(expr[,as.character(rd$ID[rd$rd=="no divergence"])],power=20)["Density"],
-cisO=getNetConcept(expr[,as.character(rd$ID[rd$rd=="cis only"])],power=20)["Density"],
-cisNtrans=getNetConcept(expr[,as.character(rd$ID[rd$rd=="cis and trans"])],power=20)["Density"],
-trans=getNetConcept(expr[,as.character(rd$ID[rd$rd=="trans only"])],power=20)["Density"] )
-den
-#         nrd        cisO  cisNtrans      trans
-# 0.005955358 0.008200147 0.01146843 0.01262072
-# permutation
-for(i in 2:101){
-    ids=as.character(sample(rd$ID[rd$rd=="no divergence"],301))
-    den[i,"nrd"]=getNetConcept(expr[,ids],power=20)["Density"]
-}
-for(i in 2:101){
-    ids=as.character(sample(rd$ID[rd$rd=="cis only"],301))
-    den[i,"cisO"]=getNetConcept(expr[,ids],power=20)["Density"]
-}
-for(i in 2:101){
-    ids=as.character(sample(rd$ID[rd$rd=="cis and trans"],301))
-    den[i,"cisNtrans"]=getNetConcept(expr[,ids],power=20)["Density"]
-}
-boxplot(den)
-points(1:4,den[1,],col="blue",pch=19)
-dev.off()
 
 ## clusters x RD
 node<-read.table("nodes.txt",header=TRUE,sep="\t")
@@ -726,4 +722,3 @@ plotCorrespondence(clusters$module.tx2094,clusters$clust,file=NULL,title="", tex
 plotCorrespondence(clusters$module.maxxa,clusters$clust,file=NULL,title="", textplot=FALSE,corrplot=FALSE,fisherplot=TRUE,fisher="greater", mai=c(1.02, 0.82,0.82,0.42))
 table(rd$rd,cl$clust)
 plotCorrespondence(rd$rd,cl$clust,title="RD x clust", textplot=FALSE,corrplot=FALSE,fisherplot=TRUE,fisher="greater", mai=c(1.02, 0.82,0.82,0.42))
----book

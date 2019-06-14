@@ -69,7 +69,7 @@ pairwiseDE<-function(dds, contrast,savePath)
     print(contrast)
     ddsPW <-dds[,dds$condition %in% contrast]
     ddsPW$condition<-droplevels(ddsPW$condition)
-    res <- results(DESeq(ddsPW))
+    res <- results(DESeq(ddsPW), contrast = c("condition",contrast))
     print( summary(res,alpha=.05) ) # print results
     write.table(res, file=paste(savePath,"DE/",paste(contrast, collapse="vs"),".txt", sep=""), sep="\t")
 }
@@ -122,10 +122,10 @@ T<-as.data.frame(sigT[-1,], row.names=FALSE)
 names(T)<-sigT[1,]
 print(T)
 #         sample 1        sample 2 DE (q<0.05)  1>2  2>1
-#1  Maxxa.10dpa.At  Maxxa.10dpa.Dt        7445 3775 3670
-#2  Maxxa.20dpa.At  Maxxa.20dpa.Dt        4543 2297 2246
-#3 TX2094.10dpa.At TX2094.10dpa.Dt        6819 3414 3405
-#4 TX2094.20dpa.At TX2094.20dpa.Dt        4180 2095 2085
+#1  Maxxa.10dpa.At  Maxxa.10dpa.Dt        7445 3670 3775
+#2  Maxxa.20dpa.At  Maxxa.20dpa.Dt        4543 2246 2297
+#3 TX2094.10dpa.At TX2094.10dpa.Dt        6819 3405 3414
+#4 TX2094.20dpa.At TX2094.20dpa.Dt        4180 2085 2095
 
 
 #####################################################
@@ -201,7 +201,7 @@ plotFisherCorr=function(c1,c2, title="", fisher="two.sided")
     
     corrplot(residualTable, p.mat=as.matrix(pTable), insig="label_sig", sig.level=c(0.001,0.01,0.05),is.corr=FALSE, method="color",pch.col="white",tl.col="black")
 }
-plotCorrespondence=function(c1,c2,file=NULL,title="", textplot=TRUE,corrplot=TRUE,fisherplot=TRUE,fisher="greater", mai=c(1.02, 0.82,0.82,0.42))
+plotCorrespondence=function(c1,c2,file=NULL,title="", textplot=TRUE,corrplot=TRUE,fisherplot=TRUE,fisher="greater", mai=c(1.02, 0.82,0.82,0.42), cex=1)
 {
     if(!is.null(file)){pdf(file)}
     tbl=table(data.frame(c1,c2))
@@ -246,7 +246,7 @@ plotCorrespondence=function(c1,c2,file=NULL,title="", textplot=TRUE,corrplot=TRU
         xLabels = colCats, yLabels = rowCats,
         textMatrix = CountTbl, colors = blueWhiteRed(100)[50:100],
         main = paste0(title," correspondence of categories"),
-        cex.text = 1, cex.lab = 1, setStdMargins = FALSE      )
+        cex.text = cex, cex.lab = cex, setStdMargins = FALSE      )
         par(mai=mai.default)
         
     }
@@ -294,15 +294,15 @@ cr20=compareRatios(Rm20, Rt20, 3,3)
 xtabs(~R1sig+R2sig,data=cr10)
 #   R2sig
 # R1sig   R2<1  R2=1  R2>1
-#  R1<1  2277  1335    58
-#  R1=1  1056 12906   987
-#  R1>1    72  1334  2369
+# R1<1  2369  1334    72
+# R1=1   987 12906  1056
+# R1>1    58  1335  2277
 xtabs(~R1sig+R2sig,data=cr20)
 #   R2sig
 # R1sig   R2<1  R2=1  R2>1
-# R1<1  1240   980    26
-# R1=1   824 16170   857
-# R1>1    21  1064  1212
+# R1<1  1212  1064    21
+# R1=1   857 16170   824
+# R1>1    26   980  1240
 # what percentage is concordant?
 sum(diag(xtabs(~R1sig+R2sig,data=cr10)))/nrow(cr10)
 # 0.7837814
@@ -310,11 +310,11 @@ sum(diag(xtabs(~R1sig+R2sig,data=cr20)))/nrow(cr20)
 # 0.831562
 # check results from direction comparisons
 table(cr10$R1vsR2)/nrow(cr10)
-# R1<R2      R1=R2      R1>R2
-# 0.03049924 0.93766187 0.03183889
+#      R1<R2      R1=R2      R1>R2
+# 0.03183889 0.93766187 0.03049924
 table(cr20$R1vsR2)/nrow(cr20)
-# R1<R2      R1=R2      R1>R2
-# 0.01330714 0.97021524 0.01647763
+#      R1<R2      R1=R2      R1>R2
+# 0.01647763 0.97021524 0.01330714
 crUnion = data.frame(R1sig=(cr10$R1sig!="R1=1" |cr20$R1sig!="R1=1" ), R2sig=(cr10$R2sig!="R2=1" |cr20$R2sig!="R2=1"  ), R1vsR2=(cr10$R1vsR2!="R1=R2" |cr20$R1vsR2!="R1=R2"  ))
 rownames(crUnion)=rownames(cr10)
 apply(crUnion,2,table)
@@ -333,22 +333,38 @@ crUnion = crUnion[as.character(ogP_with_allele_snps$Gohir.A),]  # restrict to 80
 xtabs(~R1sig+R2sig,data=cr10)
 #      R2sig
 # R1sig  R2<1 R2=1 R2>1
-# R1<1 1109  579   34
-# R1=1  562 3538  500
-# R1>1   44  565 1105
+# R1<1 1105  565   44
+# R1=1  500 3538  562
+# R1>1   34  579 1109
 xtabs(~R1sig+R2sig,data=cr20)
 # R2sig
 # R1sig  R2<1 R2=1 R2>1
-# R1<1  605  514   11
-# R1=1  320 5127  327
-# R1>1   14  565  553
+#   R1<1  553  565   14
+#   R1=1  327 5127  320
+#   R1>1   11  514  605
 table(cr10$R1vsR2)/nrow(cr10)
 #  R1<R2      R1=R2      R1>R2
-# 0.05002489 0.90206570 0.04790941
+# 0.04790941 0.90206570 0.05002489
 table(cr20$R1vsR2)/nrow(cr20)
 # R1<R2      R1=R2      R1>R2
-# 0.02103036 0.95246391 0.02650572
+# 0.02650572 0.95246391 0.02103036
 
+# how does the magnitude of existing bias change by cis-trans: bias in TX2094, contain RD, showed sig changes between ratio
+with(cr10,t.test(abs(R1),abs(R2))) # not sig
+with(cr10[cr10$R2sig=="R2=1" & rd_P$rd==TRUE,],t.test(abs(R1),abs(R2))) # sig R1>R2
+with(cr10[cr10$R2sig!="R2=1" & rd_P$rd==TRUE,],t.test(abs(R1),abs(R2))) # sig R1<R2
+# Welch Two Sample t-test
+# data:  abs(R1) and abs(R2)
+# t = -3.9721, df = 1098, p-value = 0.00007589
+# alternative hypothesis: true difference in means is not equal to 0
+# 95 percent confidence interval:
+# -0.4654242 -0.1576418
+# sample estimates:
+# mean of x mean of y
+# 1.377457  1.688990
+with(cr20,t.test(abs(R1),abs(R2))) # sig R1>R2
+with(cr20[cr20$R2sig=="R2=1" & rd_P$rd==TRUE,],t.test(abs(R1),abs(R2))) # sig R1>R2 0.9349404 0.4715869
+with(cr20[cr20$R2sig!="R2=1" & rd_P$rd==TRUE,],t.test(abs(R1),abs(R2))) # sig R1<R2 1.801027  2.204624
 
 save(ogP, ogP_with_allele_snps, cr10, cr20, crUnion, cr10_22394, cr20_22394, crUnion_22394, file="homoeoPairs.rdata")
 
@@ -393,266 +409,102 @@ plotCorrespondence(rd_P$rd,cr20$R1vsR2, title="20dpa, cis/trans, TX2094 vs Maxxa
 dev.off()
 
 ## is any RD pattern biased towards At or Dt
+rd_At$rd=factor(rd_At$rd, levels=c("cis only","trans only","cis and trans","no divergence"))
+rd_Dt$rd=factor(rd_Dt$rd, levels=c("cis only","trans only","cis and trans","no divergence"))
 pdf("homoeo.AtvsDt.pdf")
 # 8036 pairs
-plotCorrespondence(rd_At$rd,rd_Dt$rd, title="AtvsDt, 8036 pairs",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE)
+plotCorrespondence(rd_At$rd,rd_Dt$rd, title="AtvsDt, 8036 pairs",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE,cex=1.5)
 # 952 pairs with RD
-plotCorrespondence(rd_At$rd[rd_P$rd==TRUE],rd_Dt$rd[rd_P$rd==TRUE], title="AtvsDt, 952 pairs with RD",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE)
-dev.off()
-
---book
-xtabs(~crd+R1vsR2,data=cr10)
-plotCorrespondence(cr10$crd,cr10$R1vsR2, title="10dpa, MxT, AtvsDt",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE)
-plotCorrespondence(cr10$trd,cr10$R1vsR2, title="10dpa, MxT, AtvsDt",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE)
-dev.off()
-
-plotCorrespondence(cr10$rd,cr10$categoryDou, title="10dpa, MxT, AtvsDt",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE)
-plotCorrespondence(cr10$Adir,cr10$categoryDou, title="10dpa, MxT, AtvsDt",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE)
-plotCorrespondence(cr10$rd,paste(cr10$categoryDou, cr10$classDou), title="10dpa, MxT, AtvsDt",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE)
-plotCorrespondence(cr10$Adir,paste(cr10$categoryDou, cr10$classDou), title="10dpa, MxT, AtvsDt",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE)
-
-
-dev.off()
-
-plotCorrespondence(cr10$At.mt,cr10$Dt.mt, title="10dpa, MxT, AtvsDt")
-plotCorrespondence(cr10$At.tm,cr10$Dt.tm, title="10dpa, TxM, AtvsDt")
-dev.off()
-plotCorrespondence(cr10$At.mt[which(cr10$categoryDou=="conserved")],cr10$Dt.mt[which(cr10$categoryDou=="conserved")], title="10dpa, MxT, AtvsDt, conserved",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE)
-plotCorrespondence(cr10$At.tm[which(cr10$categoryDou=="conserved")],cr10$Dt.tm[which(cr10$categoryDou=="conserved")], title="10dpa, TxM, AtvsDt, conserved",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE)
-
-plotCorrespondence(cr10$At.mt[which(cr10$categoryDou=="At increase")],cr10$Dt.mt[which(cr10$categoryDou=="At increase")], title="10dpa, MxT, AtvsDt, At increase",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE)
-plotCorrespondence(cr10$At.tm[which(cr10$categoryDou=="At increase")],cr10$Dt.tm[which(cr10$categoryDou=="At increase")], title="10dpa, TxM, AtvsDt, At increase",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE)
-
-plotCorrespondence(cr10$At.mt[which(cr10$categoryDou=="Dt increase")],cr10$Dt.mt[which(cr10$categoryDou=="Dt increase")], title="10dpa, MxT, AtvsDt, Dt increase",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE)
-plotCorrespondence(cr10$At.tm[which(cr10$categoryDou=="Dt increase")],cr10$Dt.tm[which(cr10$categoryDou=="Dt increase")], title="10dpa, TxM, AtvsDt, Dt increase",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE)
+plotCorrespondence(rd_At$rd[rd_P$rd==TRUE],rd_Dt$rd[rd_P$rd==TRUE], title="AtvsDt, 952 pairs with RD",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE, cex=1.5)
 dev.off()
 
 
-plotFisherCorr(cr10$At.mt,cr10$Dt.mt, title="10dpa, MxT, AtvsDt", fisher="two.sided")
-plotFisherCorr(cr10$At.tm,cr10$Dt.tm, title="10dpa, TxM, AtvsDt", fisher="two.sided")
-dev.off()
-
-
-
-
-cr20 = cr20[as.character(ogP_with_allele_snps$Gohir.A),]
-
-
-library(gplots)
-pdf("DE/checkDE.pdf")
-textplot(T)
-mtext("DE analysis result summary")
-dev.off()
-
-
-
-
-## correlate parental expression divergence ##
-corRes <-c("sample","measure","cor","pvalue")
-for(i in c("res.mt10","res.tm10","res.mt20","res.tm20"))
-{
-    res=get(i)
-    for(d in c("A","B","AminusB")){
-        r = cor.test(res[ogP_with_allele_snps$Gohir.A,d], res[ogP_with_allele_snps$Gohir.D,d],use='pairwise.complete.obs')
-        corRes=rbind(corRes,c(i,d,r$estimate, r$p.value))
-    }
-}
-corRes
-
----book
-# label ids by OG
-og_by_id <- c(as.character(ogP$OG),as.character(ogP$OG))
-names(og_by_id) <-c(as.character(ogP$Gohir.A), as.character(ogP$Gohir.D))
-
-res=data.frame(id=ids, OG = og_by_id[ids], OG.duplicated=NA, origin = gsub("[0-9].*","",gsub("Gohir.1|Gohir.|_.*","",ids) ))
-res$OG.duplicated = duplicated(res$OG) | duplicated(res$OG, fromLast=TRUE) # false means solo homoeolog
-res$OG.duplicated[is.na(res$OG)] = "unknown" # not clear about OG, at least not 1:1
-table(res$origin, res$OG.duplicated)
-#    FALSE TRUE unknown
-# A   2874 8036    2552
-# D   3029 8036    2995
-# mt     0    0       9
-# Z      0    0     285
-res$homoeo.status <- res$OG.duplicated
-res$homoeo.status[res$origin=="A" & res$OG.duplicated==TRUE] <- "inPair.A"
-res$homoeo.status[res$origin=="A" & res$OG.duplicated==FALSE] <- "solo.A"
-res$homoeo.status[res$origin=="D" & res$OG.duplicated==TRUE] <- "inPair.D"
-res$homoeo.status[res$origin=="D" & res$OG.duplicated==FALSE] <- "solo.D"
-table(res$homoeo.status)
-# inPair.A inPair.D   solo.A   solo.D  unknown
-#     8036     8036     2874     3029     5841
-write.table(res,file="homoeolog_status042618.txt",sep="\t")
-
-# examine cis tran categorization by gene homoeolog status
-library(vcd)
-l<-c("res10","res20","res.mt10","res.mt20","res.tm10","res.tm20")
-pdf("plotAssoc.cistrans.vs.homoeoS.pdf")
-for(i in l){
-    x<-get(i)
-    if(unique(res$id == rownames(x))){
-        cis_trans_regulatory_category = gsub("[.].*","",x$category)
-        homoeolog_origin_presence = res$homoeo.status
-        tbl = table(cis_trans_regulatory_category, homoeolog_origin_presence)
-        textplot(tbl); title(paste0(i,": p-value ", chisq.test(tbl,simulate.p.value = TRUE)$p.value))
-        assoc(tbl, shade=TRUE, main = i)
-        mosaic(tbl, shade=TRUE, main = i)
-    }
-}
-dev.off()
-pdf("plotAssoc.cistrans.vs.homoeoO.pdf")
-for(i in l){
-    x<-get(i)
-    if(unique(res$id == rownames(x))){
-        cis_trans_regulatory_category = gsub("[.].*","",x$category)
-        homoeolog_origin = res$origin
-        tbl = table(cis_trans_regulatory_category, homoeolog_origin)
-        textplot(tbl); title(paste0(i,": p-value ", chisq.test(tbl,simulate.p.value = TRUE)$p.value))
-        assoc(tbl, shade=TRUE, main = i)
-        mosaic(tbl, shade=TRUE, main = i)
-    }
-}
-dev.off()
-pdf("plotAssoc.cistrans.vs.homoeoD.pdf")
-for(i in l){
-    x<-get(i)
-    if(unique(res$id == rownames(x))){
-        cis_trans_regulatory_category = gsub("[.].*","",x$category)
-        homoeolog_duplicated = res$OG.duplicated
-        tbl = table(cis_trans_regulatory_category, homoeolog_duplicated)
-        textplot(tbl); title(paste0(i,": p-value ", chisq.test(tbl,simulate.p.value = TRUE)$p.value))
-        assoc(tbl, shade=TRUE, main = i)
-        mosaic(tbl, shade=TRUE, main = i)
-    }
-}
-dev.off()
-library(corrplot)
-library(WGCNA)
-pdf("plotAssoc.cistrans.AvsD.pdf")
-for(i in l){
-    x<-get(i)
-    if(unique(res$id == rownames(x))){
-        At = x[ogP_snps$Gohir.A,"category"]
-        Dt = x[ogP_snps$Gohir.D,"category"]
-        OG = as.character(ogP_snps$OG)
-        
-        tbl = table(At,Dt)
-        textplot(tbl); title(paste0(i,": p-value ", chisq.test(tbl,simulate.p.value = TRUE)$p.value))
-        assoc(tbl, shade=TRUE, main = i)
-        mosaic(tbl, shade=TRUE, main = i)
-        
-        CountTbl = as.matrix(tbl)
-        residualTable  = chisq.test(tbl,simulate.p.value = TRUE)$residuals
-        corrplot(residualTable, p.mat=CountTbl, insig="p-value", sig.level=0,is.corr=FALSE)
-        
-        pTable = CountTbl
-        rowCats = levels(factor(At))
-        colCats = levels(factor(Dt))
-        for(rc in rowCats)
-        for(cc in colCats)
-        {
-            rclass <- (At==rc) # row
-            cclass <- (Dt==cc) # col
-            pTable[rc, cc] = -log10(fisher.test(rclass, cclass, alternative = "greater")$p.value);
-            CountTbl[rc, cc] = table(rclass  & cclass)["TRUE"]
-        }
-        CountTbl[is.na(CountTbl)]=0
-        # display the p-value and counts in a color-coded table. The colors will indicate the p-value signicance
-        # Truncate p values smaller than 10^{-50} to 10^{-50}
-        pTable[is.infinite(pTable)] = 1.3*max(pTable[is.finite(pTable)]);
-        pTable[pTable>50 ] = 50 ;
-        # Marginal counts (really module sizes)
-        rTotals = apply(CountTbl, 1, sum)
-        cTotals = apply(CountTbl, 2, sum)
-        # Use function labeledHeatmap to produce the color-coded table with all the trimmings
-        labeledHeatmap( Matrix = pTable, colorLabels = TRUE,
-        xLabels = paste("Dt - ", gsub("[.].*","",colCats)), yLabels = paste("At - ", gsub("[.].*","",rowCats)),
-        textMatrix = CountTbl, colors = blueWhiteRed(100)[50:100],
-        main = paste0(i, ": Correspondence of categories"),
-        cex.text = 1, cex.lab = 1, setStdMargins = FALSE      )
-    }
-}
-dev.off()
-
-
-
-###################
-##### Results #####
-###################
-
-x<-read.table("SNPtypes.txt",sep="\t",header=T)
-x[1:4,]
-# F1 Maxxa TX2094   Freq                      note
-# 1    1     1      0     98  allele diagnostic: Maxxa
-# 2  1,0     1      0  22065  allele diagnostic: Maxxa
-# 3    1     0      1    305 allele diagnostic: tx2094
-# 4  1,0     0      1  68549 allele diagnostic: tx2094
-sum(x$Freq[1:4] ) # 91017
-## Between Maxxa and TX2094 alleles, a total of 91,017 SNPs was detected from 27,816 gene models.
-
-## What are genes diagostic for Maxxa and TX2094 SNPs?
-# set working dir to "cistrans_Ranalysis"
+## how does RD pattern change homoeolog contribution ratio?
 load("cistrans.rdata")
-# A10, B10, B.mt10, B.tm10, A20, B20, B.mt20, B.tm20, res10, res.mt10, res.tm10, res20, res.mt20, res.tm20, sumT
-dim(A10) # 27816
-table(gsub("..G.*|Z.*","",gsub("Gohir.","",rownames(A10))))
-# 1        A        D  mt_atp6  mt_atp9 mt_ccmFN  mt_cox1  mt_matR
-# 285    13462    14060        1        1        1        1        1
-# mt_mttB  mt_nad3  mt_nad4 mt_rps12
-# 1        1        1        1
+pdf("homoe.ratioChangebyRD.pdf")
+# does certain regulatory pattern of At change its ration? what about total expression?
+boxplot(cr10[as.character(ogP_with_allele_snps$Gohir.A),"R1minusR2"]~res.mt10[as.character(ogP_with_allele_snps$Gohir.A),"category"], main = "At contribution by mt10 cis/trans category")
+boxplot(cr10[as.character(ogP_with_allele_snps$Gohir.A),"R1minusR2"]~res.tm10[as.character(ogP_with_allele_snps$Gohir.A),"category"], main = "At contribution by tm10 cis/trans category")
+boxplot(cr10[as.character(ogP_with_allele_snps$Gohir.A),"R1minusR2"]~res.mt20[as.character(ogP_with_allele_snps$Gohir.A),"category"], main = "At contribution by mt20 cis/trans category")
+boxplot(cr10[as.character(ogP_with_allele_snps$Gohir.A),"R1minusR2"]~res.tm20[as.character(ogP_with_allele_snps$Gohir.A),"category"], main = "At contribution by tm20 cis/trans category")
+boxplot(cr10[as.character(ogP_with_allele_snps$Gohir.A),"R1minusR2"]~rd_At$rd, main = "At contribution by RD type")
+# does certain regulatory pattern of Dt change its ration? what about total expression?
+boxplot(cr10[as.character(ogP_with_allele_snps$Gohir.A),"R1minusR2"]~res.mt10[as.character(ogP_with_allele_snps$Gohir.D),"category"], main = "Dt contribution by mt10 cis/trans category")
+boxplot(cr10[as.character(ogP_with_allele_snps$Gohir.A),"R1minusR2"]~res.tm10[as.character(ogP_with_allele_snps$Gohir.D),"category"], main = "Dt contribution by tm10 cis/trans category")
+boxplot(cr10[as.character(ogP_with_allele_snps$Gohir.A),"R1minusR2"]~res.mt20[as.character(ogP_with_allele_snps$Gohir.D),"category"], main = "Dt contribution by mt20 cis/trans category")
+boxplot(cr10[as.character(ogP_with_allele_snps$Gohir.A),"R1minusR2"]~res.tm20[as.character(ogP_with_allele_snps$Gohir.D),"category"], main = "Dt contribution by tm20 cis/trans category")
+boxplot(cr10[as.character(ogP_with_allele_snps$Gohir.A),"R1minusR2"]~rd_Dt$rd, main = "Dt contribution by RD type")
+dev.off()
+# lump together
+pdf("homoe.ratioChangebyRD.union.pdf")
+u=data.frame(ratio = c(cr10[as.character(ogP_with_allele_snps$Gohir.A),"R1minusR2"], cr20[as.character(ogP_with_allele_snps$Gohir.A),"R1minusR2"]), category =  c(cr10[as.character(ogP_with_allele_snps$Gohir.A),"R1vsR2"], cr20[as.character(ogP_with_allele_snps$Gohir.A),"R1vsR2"]), At =c(as.character(rd_At$rd),as.character(rd_At$rd)), Dt=c(as.character(rd_Dt$rd),as.character(rd_Dt$rd)) )
+u$At=factor(u$At, levels=c("cis only","trans only","cis and trans","no divergence"))
+u$Dt=factor(u$Dt, levels=c("cis only","trans only","cis and trans","no divergence"))
+plotCorrespondence(u$category,u$At, title="At: RD vs homoeolog ratio change",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE,cex=1)
+plotCorrespondence(u$category,u$Dt, title="Dt: RD vs homoeolog ratio change",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE,cex=1)
+boxplot(ratio~category,data=u, main="double check")
+boxplot(ratio~At,data=u, main = "At/Dt change by RD of At")
+boxplot(ratio~Dt,data=u, main = "At/Dt change by RD of Dt")
+# cis only of Dt preferentially decrease Dt contribution, but not change At much
+# tran only of At decrease At contribution, trans only of Dt also decrease Dt contribution
+# prettier boxplot
+library(reshape2)
+u2<-melt(u,measure.vars=c("At","Dt"))
+u2$value=factor(u2$value, levels=c("cis only","trans only","cis and trans","no divergence"))
+print(p<-ggplot(u2, aes(x=value,y=ratio,color=variable))+geom_boxplot()+theme_bw())
+dev.off()
+# whether R1vsR2 deviate from 0
+t.test(u$ratio[u$At=="cis only"]) # p-value = 0.6856
+t.test(u$ratio[u$Dt=="cis only"]) # p-value = 0.002579, **
+t.test(u$ratio[u$At=="trans only"]) # p-value = 0.0008632 ***
+t.test(u$ratio[u$Dt=="trans only"]) # p-value = 0.1442
+t.test(u$ratio[u$At=="cis and trans"]) # p-value = 0.4261
+t.test(u$ratio[u$Dt=="cis and trans"]) # p-value = 0.002401, **
+t.test(u$ratio[u$At=="no divergence"]) # p-value = 0.1601
+t.test(u$ratio[u$Dt=="no divergence"]) # p-value = 0.9187
+# compare
+t.test(u$ratio[u$At=="cis only"],u$ratio[u$Dt=="cis only"]) # p-value = 0.06717
+t.test(u$ratio[u$At=="trans only"],u$ratio[u$Dt=="trans only"]) # p-value = 0.0006546
+t.test(u$ratio[u$At=="cis and trans"],u$ratio[u$Dt=="cis and trans"]) # p-value = 0.07942
+t.test(u$ratio[u$At=="no divergence"],u$ratio[u$Dt=="no divergence"]) # p-value = 0.353
 
+## Another question could be how does RD pattern change aggregated expression of homoeologs. But this question was not dealt with elsewhere in the manuscript, because homoeologs are treated as individual genes. So it is not that relevant i think.
 
-## What is the expression divergence between wild and domesticate, among all 66,610 gene?
-fn.de10<-"Maxxa.10dpavsTX2094.10dpa.txt"
-fn.de20<-"Maxxa.20dpavsTX2094.20dpa.txt"
-res<-read.table(paste0("DE-66610/",fn.de10),sep="\t",header=TRUE)
-countADZ(rownames(res)) #   A     D    mt     Z 32295 33341    33   941
-sig<- res[res$padj<0.05 & !is.na(res$padj),]
-dim(sig)  # 6952
-id.de10<-rownames(sig)
-countADZ(id.de10)  # A    D   mt    Z, 3321 3552    4   75
-res<-read.table(paste0("DE-66610/",fn.de20),sep="\t",header=TRUE)
-sig<- res[res$padj<0.05 & !is.na(res$padj),]
-dim(sig)  # 4878
-id.de20<-rownames(sig)
-countADZ(id.de20)  # A    D   mt    2368 2450   18   42
-de<-unique(c(id.de10,id.de20))
-countADZ(de)  # 4834 5083   18   99
-n=length(de)  #10034
-length(setdiff(de, rownames(A10))) # DE, no SNP 3248
-x = length(intersect(de, rownames(A10))) # DE, SNP 6786
-p = nrow(A10)/66610 # SNPs in all
-## Is the percentage of genes containing SNPs in DE genes higher than that in all genes?
-binom.test(x, n, p, alternative = c("greater"), conf.level = 0.95)
-## Are these DE genes detected with MxT SNPs? Any association between DE and genetic divergence?
-# make 2x2 contingency table for de x snp
-M <- as.table(rbind(c(x, n-x), c(nrow(A10)-x, 66610-n-(nrow(A10)-x))))
-dimnames(M) <- list(expression = c("DE", "no DE"),
-sequence = c("SNPs","no SNPs"))
-(Xsq <- chisq.test(M))  # Prints test summary
-Xsq$observed   # observed counts (same as M)
-Xsq$expected   # expected counts under the null
-Xsq$residuals  # Pearson residuals
-Xsq$stdres     # standardized residuals
+## compare seq divergence between homoelogs
+load("seqDivergence.rdata")
+load("paml/paml.rdata") #paml
+S <- seqDev[,-1]
+rownames(S)<-seqDev$ID
+S <- S[rownames(res.mt10),]
+rownames(paml)=paml$id
+R=paml[rownames(res.mt10),]
+S$dNdS=R$"dN/dS"
+S$dS=R$"dS"
+S$dN=R$"dN"
+# homoeo
+Sa = S[as.character(ogP_with_allele_snps$Gohir.A),]
+Sd = S[as.character(ogP_with_allele_snps$Gohir.D),]
+unique(rownames(rd_At)==rownames(Sa))
+Sa$rd=rd_At$rd
+Sd$rd=rd_Dt$rd
+Sa$genome="At"
+Sd$genome="Dt"
+SP=rbind(Sa,Sd)
 
+# correlation
+pdf("homoe.seqDev.pdf")
+for(col in names(S)){
+    print(col)
+    res=cor.test(Sa[,col],Sd[,col])
+    plot(Sa[,col],Sd[,col], col=alpha("black", 0.2), pch=16, main=paste0(col, ": r = ",res$estimate,", p = ",round(res$p.value,4)))
+    print(wilcox.test(Sa[,col],Sd[,col])) # significant difference in s, t.indel, t.indel.size
+    print(t.test(Sa[,col],Sd[,col]))
+}
+print(p<-ggplot(SP, aes(x=rd,y=s,color=genome))+geom_boxplot()+theme_bw())
+print(p<-ggplot(SP, aes(x=rd,y=s.indel,color=genome))+geom_boxplot()+theme_bw())
+print(p<-ggplot(SP, aes(x=rd,y=exon,color=genome))+geom_boxplot()+theme_bw())
+print(p<-ggplot(SP, aes(x=rd,y=dS,color=genome))+geom_boxplot()+theme_bw())
+print(p<-ggplot(SP, aes(x=rd,y=dN,color=genome))+geom_boxplot()+theme_bw())
+print(p<-ggplot(SP, aes(x=rd,y=dN/dS,color=genome))+geom_boxplot()+theme_bw())
 
-## What is the expression divergence between wild and domesticate, among 27,816 genes?
-fn.de10<-"Maxxa.10dpavsTX2094.10dpa.txt"
-fn.de20<-"Maxxa.20dpavsTX2094.20dpa.txt"
-res<-read.table(paste0("DE-27816/",fn.de10),sep="\t",header=TRUE)
-countADZ(rownames(res))  # A     D    mt     Z 13462 14060     9   285
-sig<- res[res$padj<0.05 & !is.na(res$padj),]
-dim(sig)  # 5570
-id.de10<-rownames(sig)
-countADZ(id.de10)  # 2677 2830    3   60
-res<-read.table(paste0("DE-27816/",fn.de20),sep="\t",header=TRUE)
-sig<- res[res$padj<0.05 & !is.na(res$padj),]
-dim(sig)  # 3578
-id.de20<-rownames(sig)
-countADZ(id.de20)  # 1726 1816    8   28
-countADZ(de)  # 4834 5083   18   99
-de<-unique(c(id.de10,id.de20))
-countADZ(de)  # 3753 3951    8   77
-length(de)  #7789, noting this number is bigger that 6786 from DE&SNP for 66610
-
-
-
+dev.off()

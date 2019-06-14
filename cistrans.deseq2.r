@@ -35,7 +35,7 @@ length(which(rowSums(count[,grep("Maxxa",names(count))])>=5 & rowSums(count[,gre
 # overlap set 46411
 
 # load total counts from bam idxstat
-load("~/jfw-lab/Projects/AD1_domestication_cistrans/bowtie2_mapping/Ranalysis/counts.rdata")->l
+load("/lss/research/jfw-lab/Projects/AD1_domestication_cistrans/bowtie2_mapping/Ranalysis/counts.rdata")->l
 l
 # "info"       "total"      "count.rld"  "count.log2"
 select<-which( (info$source=="yb"|info$source=="jj")& (info$genome=="Maxxa"|info$genome=="TX2094"|info$genome=="Yuc"|info$genome=="F1") & (info$dpa=="10dpa"|info$dpa =="20dpa"))
@@ -126,7 +126,7 @@ pairwiseDE<-function(dds, contrast,savePath)
     print(contrast)
     ddsPW <-dds[,dds$condition %in% contrast]
     ddsPW$condition<-droplevels(ddsPW$condition)
-    res <- results(DESeq(ddsPW))
+    res <- results(DESeq(ddsPW), contrast = c("condition",contrast))  # make sure in order
     print( summary(res,alpha=.05) ) # print results
     write.table(res, file=paste(savePath,"DE/",paste(contrast, collapse="vs"),".txt", sep=""), sep="\t")
 }
@@ -219,7 +219,7 @@ mtext("DE analysis result summary")
 dev.off()
 
 # rename this "DE" folder as "DE0"
-system("mv DE/ DE-66610/")
+system("mv DE/ DE-66610-mar2019/")
 
 # save total datasets
 write.table(countT, file="Genes66610.raw.count.txt", sep="\t")
@@ -327,17 +327,6 @@ write.table(annotation, file="Genes27816.transcrip.description.txt", sep="\t")
 #####################################################
 ############### Differential expression #############
 #####################################################
-pairwiseDE<-function(dds, contrast,savePath)
-{
-    # DE analysis
-    print(contrast)
-    ddsPW <-dds[,dds$condition %in% contrast]
-    ddsPW$condition<-droplevels(ddsPW$condition)
-    res <- results(DESeq(ddsPW))
-    print( summary(res,alpha=.05) ) # print results
-    write.table(res, file=paste(savePath,"DE/",paste(contrast, collapse="vs"),".txt", sep=""), sep="\t")
-}
-
 
 # differential expression to get allelic expression divergence
 library(DESeq2)
@@ -362,7 +351,7 @@ apply(batch,1,function(x) pairwiseDE(dds,x,savePath = ""))
 B10<-read.table("DE/maxxa.F1.10dpavstx2094.F1.10dpa.txt", header=TRUE, sep="\t")
 B20<-read.table("DE/maxxa.F1.20dpavstx2094.F1.20dpa.txt", header=TRUE, sep="\t")
 dim(B10[B10$padj<0.05 & !is.na(B10$padj),]) # 3800
-dim(B20[B20$padj<0.05 & !is.na(B20$padj),]) # 2887
+dim(B20[B20$padj<0.05 & !is.na(B20$padj),]) # 2888
 length(unique(c(which(B10$padj<0.05 & !is.na(B10$padj)),which(B20$padj<0.05 & !is.na(B20$padj))))) #4760
 
 
@@ -419,24 +408,13 @@ dim(B.tm20[B.tm20$padj<0.05 & !is.na(B.tm20$padj),]) # 1378    6
 
 # important: A10, B10, B.mt10, B.tm10, A20, B20, B.mt20, B.tm20,
 save(A10, B10, B.mt10, B.tm10, A20, B20, B.mt20, B.tm20, file="cistrans.rdata")
-system("mv DE/ DE-27816/")
+system("mv DE/ DE-27816-mar2019/")
 
 
 
 #####################################################
 ############### Visualize DE results ################
 #####################################################
-getSig<-function(res,fc.threshold=0,direction=NULL){
-    sig<- res[res$padj<0.05 & !is.na(res$padj) & abs(res$log2FoldChange)>=fc.threshold,]
-    if(is.null(direction)){
-        n<-nrow(sig)
-    }else if(direction=="up"){
-        n<-nrow(sig[sig$log2FoldChange>0,])
-    }else if(direction=="down"){
-        n<-nrow(sig[sig$log2FoldChange<0,])
-    }
-    return(n)
-}
 
 #fileL<- list.files("DE27816")
 fileL<-paste0(batch[,1],"vs",batch[,2],".txt")
@@ -447,16 +425,16 @@ fileL<-c(fileL, paste0(batchff[,1],"vs",batchff[,2],".txt"))
 sigT<-c("sample 1","sample 2","DE (q<0.05)","1>2","2>1")
 for(file in fileL)
 {
-    res<-read.table(paste0("DE-27816/",file),sep="\t",header=TRUE)
+    res<-read.table(paste0("DE-27816-mar2019/",file),sep="\t",header=TRUE)
     sigRes <- c(unlist(strsplit(gsub(".txt","",file),split="vs") ), getSig(res),getSig(res,direction="up"),getSig(res,direction="down"))
     sigT<-rbind(sigT,sigRes)
 }
 T<-as.data.frame(sigT[-1,], row.names=FALSE)
 names(T)<-sigT[1,]
-write.table(T,file="Genes27816.DEsummary.txt",sep="\t")
+write.table(T,file="DE-27816-mar2019/Genes27816.DEsummary.txt",sep="\t")
 
 library(gplots)
-pdf("checkDE.pdf")
+pdf("DE-27816-mar2019/checkDE.pdf")
 textplot(T)
 mtext("DE analysis result summary")
 
@@ -667,7 +645,6 @@ plotCisTrans<-function(table, plotTitle="")
     print(p)
 }
 
-save(A10, B10, B.mt10, B.tm10, A20, B20, B.mt20, B.tm20, res10, res.mt10, res.tm10, res20, res.mt20, res.tm20, sumT, file="cistrans.rdata")
 
 sumT<-as.data.frame(matrix(unlist(lapply(list(res.mt10,res.tm10,res.mt20, res.tm20,res10,res20), function(x)table(x$category)) ),ncol=6))
 rownames(sumT)<-names(table(res10$category))
@@ -684,10 +661,13 @@ plotCisTrans(res10, "F1 10dpa")
 plotCisTrans(res20, "F1 20dpa")
 dev.off()
 
+save(A10, B10, B.mt10, B.tm10, A20, B20, B.mt20, B.tm20, res10, res.mt10, res.tm10, res20, res.mt20, res.tm20, sumT, file="cistrans.rdata")
 
 # plot percentage 
-library(reshape);
+library(reshape2);
 library(plyr)
+library(ggplot2)
+colors <- c("red","blue","purple","brown","green","black","grey")
 # plot 7 categories
 T=sumT[,1:4]; 
 T$category=rownames(T)
@@ -773,4 +753,5 @@ for(i in 1:6){
     barplot(res,xlab=fc,col=col[1:5], main=tests[i,3],las=2)
 }
 dev.off()
+
 

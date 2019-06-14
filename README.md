@@ -1,6 +1,6 @@
 # Analysis of cis-trans regulation underlying cotton fiber domestication
 
-Long term data storage: `/lss/research/jfw-lab/Projects/AD1_domestication_cistrans/`
+Long term data storage location: `/lss/research/jfw-lab/Projects/AD1_domestication_cistrans/`
 
 ## Experimental Design
 
@@ -186,7 +186,6 @@ Using [cistrans.pre.r](cistrans.pre.r), hylite output files will be processed in
 Briefly, a total of 50,500 genes contain any type of SNPs, and 27,820 genes contain Maxxa/TX2094 diagnostic SNPs. Noting that genes (29,334) containing allelic counts extracted from `read.summary.txt` files mostly agree with the genes (28,820) containing diagnostic SNPs extracted from `snp.txt` file; the discrepancy probably came from MASKED snps, which means low coverage SNP site in some accession but probably allowing read assignment in some other accessions. We will next use the intersection (27,816) of this two lists. 
 
 
-
 ## Cis-Trans analysis
 
 Given that 27,816 out of 66610 genes contain diagnostic SNPs between M and T alleles. The cis/trans analysis was performed for this subset of genes. Differential gene expression was conducted using DESeq2 to calculate parental expression ratio (A=Maxxa/TX2094, as cis+trans), allelic expression ratio in F1 (B=m/t, as cis), and A-B (as trans).
@@ -219,26 +218,13 @@ Theoretically, we have four F1 samples to get cis/trans categorization: MxT10dpa
     
 ### Scripts
 
-* [cistrans.deseq2.r](cistrans.deseq2.r) conducts DE analysis and categorize cis/trans regulatory patterns.
-* [compareReciprocalF1s.r](compareReciprocalF1s.r) compares inferred categories between MxT and TxM, and generate the list of RD genes from their overlap.
-* [inheritanceMode.r](inheritanceMode.r) categorize additive, dominance and transgressive inheritance in F1s.
-* [compareReciprocalF1s.r](compareReciprocalF1s.r) compiles consistent patterns into RD gene lists.
-*  ----- unfinished -------
-* [compareHomoeologs.r](compareHomoeologs.r) analyzes homoeolog expression bias and the association to RD patterns. 
-* [relateSeqDivergence.r](relateSeqDivergence.r) characterizes promoter and coding sequence divergence in conjunction with RD patterns.
-* [coexpressionNet.r](coexpressionNet.r) construct coexpression network and extract network properties.
-* [functionEnrichment.r](functionEnrichment.r) conducts GO enrichment and GSEA analysis.
+1. [cistrans.deseq2.r](cistrans.deseq2.r) conducts DE analysis and categorize cis/trans regulatory patterns.
+2. [plotAbsProp.r](plotAbsProp.r) plots |cis|/(|cis|+|trans|) against magnitude of parental expression divergence (quantile groups of |log2A|).
+3. [boxplotByCategory.r](boxplotByCategory.r) draws boxplots by cis/trans categories, corresponding to A, |A|, B, |B|.
+4. [inheritanceMode.r](inheritanceMode.r) categorize additive, dominance and transgressive inheritance in F1s.
+5. [compareReciprocalF1s.r](compareReciprocalF1s.r) compares inferred categories between MxT and TxM, and generate the list of RD genes from their overlap.
+6. [relateSeqDivergence.r](relateSeqDivergence.r) characterizes promoter and coding sequence divergence in conjunction with RD patterns.
+7. [compareHomoeologs.r](compareHomoeologs.r) analyzes homoeolog expression bias and the association to RD patterns.
+8. [coexpressionNet.r](coexpressionNet.r) construct coexpression network and extract network properties.
+9. [functionEnrichment.r](functionEnrichment.r) conducts GO enrichment and GSEA analysis.
 
-* [boxplotByCategory.r](boxplotByCategory.r) draws boxplots by cis/trans categories, corresponding to A, |A|, B, |B|.  
-* [plotAbsProp.r](plotAbsProp.r) plots |cis|/(|cis|+|trans|) against magnitude of parental expression divergence (quantile groups of |log2A|).
-* [RSAT.md](RSAT.md) is the protocol to conduct RSAT promoter motif enrichment analysis.
-
-
-
-
-
-
-
-* [cistrans.homoeolog042618.r](cistrans.homoeolog042618.r) associates cis/trans categories with duplicated gene status.
-
-* [cistrans.promoter.r](cistrans.promoter.r) associates cis/trans categories with promoter sequence divergence.
