@@ -63,6 +63,7 @@ save(ogP, ogP_with_allele_snps, file="homoeoPairs.rdata")
 ###############################
 ## Homoeolog expression bias ##
 ###############################
+load("homoeoPairs.rdata")
 pairwiseDE<-function(dds, contrast,savePath)
 {
     # DE analysis
@@ -85,9 +86,37 @@ getSig<-function(res,fc.threshold=0,direction=NULL){
     return(n)
 }
 
-# Differential expression At vs Dt in TX2094 or Maxxa at 10 and 20 dpa
+# Differential expression of At+Dt in TX2094 or Maxxa at 10 and 20 dpa
 countT = read.table( "Genes66610.raw.count.txt", sep="\t", header=TRUE)
 coldataT =read.table( "Genes66610.sample.info.txt", sep="\t", header=TRUE)
+tt = countT[as.character(ogP$Gohir.A),]+countT[as.character(ogP$Gohir.D),]
+library(DESeq2)
+dds <- DESeqDataSetFromMatrix( countData = tt, colData = coldataT, design = ~ condition)
+# pairwise deseq workflow
+batch<- rbind(
+c("Maxxa.10dpa", "TX2094.10dpa" ),
+c("Maxxa.20dpa", "TX2094.20dpa" ))
+# make a "DE" folder
+system("mkdir DE")
+apply(batch,1,function(x) pairwiseDE(dds,x,savePath = ""))
+# print out results in the order of batch
+fileL<-paste0("DE/",batch[,1],"vs",batch[,2],".txt")
+sigT<-c("sample 1","sample 2","DE (q<0.05)","1>2","2>1")
+for(file in fileL)
+{
+    res<-read.table(file,sep="\t",header=TRUE)
+    sigRes <- c(unlist(strsplit(gsub(".txt","",file),split="vs") ), getSig(res),getSig(res,direction="up"),getSig(res,direction="down"))
+    sigT<-rbind(sigT,sigRes)
+}
+T<-as.data.frame(sigT[-1,], row.names=FALSE)
+names(T)<-sigT[1,]
+print(T)
+#     sample 1     sample 2 DE (q<0.05)  1>2  2>1
+# 1 Maxxa.10dpa TX2094.10dpa        3035 1610 1425 13.4% out 224394
+# 2 Maxxa.20dpa TX2094.20dpa        2137 1200  937 9.5%
+## out of 22394 pairs of homoeologs, 3035/2137 show expression changes in aggregated expression by domestication
+
+# Differential expression At vs Dt in TX2094 or Maxxa at 10 and 20 dpa
 a = countT[as.character(ogP$Gohir.A),]; names(a) = paste0(names(a),".At")
 d = countT[as.character(ogP$Gohir.D),]; names(d) = paste0(names(d),".Dt")
 countH = cbind(a,d)
@@ -103,18 +132,14 @@ c("Maxxa.10dpa.At", "Maxxa.10dpa.Dt" ),
 c("Maxxa.20dpa.At", "Maxxa.20dpa.Dt" ),
 c("TX2094.10dpa.At", "TX2094.10dpa.Dt" ),
 c("TX2094.20dpa.At", "TX2094.20dpa.Dt" ))
-# make a "DE" folder
-system("mkdir DE")
 # run DE
 apply(batch,1,function(x) pairwiseDE(dds,x,savePath = ""))
 # print out results in the order of batch
-fileL<- list.files("DE")
-fileL<-paste0(batch[,1],"vs",batch[,2],".txt")
-fileL<-c(fileL, paste0(batch2[,1],"vs",batch2[,2],".txt"))
+fileL<-paste0("DE/", batch[,1],"vs",batch[,2],".txt")
 sigT<-c("sample 1","sample 2","DE (q<0.05)","1>2","2>1")
 for(file in fileL)
 {
-    res<-read.table(paste0("DE/",file),sep="\t",header=TRUE)
+    res<-read.table(file,sep="\t",header=TRUE)
     sigRes <- c(unlist(strsplit(gsub(".txt","",file),split="vs") ), getSig(res),getSig(res,direction="up"),getSig(res,direction="down"))
     sigT<-rbind(sigT,sigRes)
 }
@@ -126,7 +151,7 @@ print(T)
 #2  Maxxa.20dpa.At  Maxxa.20dpa.Dt        4543 2246 2297
 #3 TX2094.10dpa.At TX2094.10dpa.Dt        6819 3405 3414
 #4 TX2094.20dpa.At TX2094.20dpa.Dt        4180 2085 2095
-
+## out of 22394 pairs of homoeologs, homoeolog bias in either accession/dpa
 
 #####################################################
 ## Domestication effects on homoeolog contribution ##
@@ -254,6 +279,34 @@ plotCorrespondence=function(c1,c2,file=NULL,title="", textplot=TRUE,corrplot=TRU
 }
 
 # how does domestication changes homoeolog expression bias - ratio
+### get total At+Dt changes
+Tt10<-read.table("DE/Maxxa.10dpavsTX2094.10dpa.txt", header=TRUE, sep="\t")
+Tt20<-read.table("DE/Maxxa.20dpavsTX2094.20dpa.txt", header=TRUE, sep="\t")
+length(which( (Tt10$padj<0.05&!is.na(Tt10$padj)) | (Tt20$padj<0.05&!is.na(Tt20$padj))  ))
+# 4482 show total expression change by domestication
+Tt10$dom = "M=T";
+Tt10$dom[Tt10$padj<0.05&!is.na(Tt10$padj)&Tt10$log2FoldChange>0]="M>T"
+Tt10$dom[Tt10$padj<0.05&!is.na(Tt10$padj)&Tt10$log2FoldChange<0]="M<T"
+Tt20$dom = "M=T";
+Tt20$dom[Tt20$padj<0.05&!is.na(Tt20$padj)&Tt20$log2FoldChange>0]="M>T"
+Tt20$dom[Tt20$padj<0.05&!is.na(Tt20$padj)&Tt20$log2FoldChange<0]="M<T"
+# check numbers
+table(Tt10$dom)
+# M<T   M=T   M>T
+# 1425 19359  1610
+table(Tt20$dom)
+# M<T   M=T   M>T
+# 937 20257  1200
+table(a=Tt10$dom,b=Tt20$dom)
+#     b
+# a     M<T   M=T   M>T
+# M<T   255  1145    25
+# M=T   667 17912   780
+# M>T    15  1200   395
+table(Tt10$dom!="M=T"|Tt20$dom!="M=T")
+# FALSE  TRUE
+# 17912  4482
+
 ### Get allelic expression divergence, test for B=0
 Rm10<-read.table("DE/Maxxa.10dpa.AtvsMaxxa.10dpa.Dt.txt", header=TRUE, sep="\t")
 Rm20<-read.table("DE/Maxxa.20dpa.AtvsMaxxa.20dpa.Dt.txt", header=TRUE, sep="\t")
@@ -315,20 +368,31 @@ table(cr10$R1vsR2)/nrow(cr10)
 table(cr20$R1vsR2)/nrow(cr20)
 #      R1<R2      R1=R2      R1>R2
 # 0.01647763 0.97021524 0.01330714
-crUnion = data.frame(R1sig=(cr10$R1sig!="R1=1" |cr20$R1sig!="R1=1" ), R2sig=(cr10$R2sig!="R2=1" |cr20$R2sig!="R2=1"  ), R1vsR2=(cr10$R1vsR2!="R1=R2" |cr20$R1vsR2!="R1=R2"  ))
+crUnion = data.frame(R1sig=(cr10$R1sig!="R1=1" |cr20$R1sig!="R1=1" ), R2sig=(cr10$R2sig!="R2=1" |cr20$R2sig!="R2=1"  ), R1vsR2=(cr10$R1vsR2!="R1=R2" |cr20$R1vsR2!="R1=R2"  ), Ttsig = Tt10$dom!="M=T"|Tt20$dom!="M=T")
 rownames(crUnion)=rownames(cr10)
 apply(crUnion,2,table)
-#  R1sig R2sig R1vsR2
-# FALSE 13739 14238  20694
-# TRUE   8655  8156   1700
+#       R1sig R2sig R1vsR2 Ttsig
+# FALSE 13739 14238  20694 17912
+# TRUE   8655  8156   1700  4482
+#       38.6% 36.4%   7.6%  20.0%
 cr10_22394 =cr10
 cr20_22394 =cr20
 crUnion_22394=crUnion
+Tt10_22394 = Tt10
+Tt20_22394 = Tt20
 
 # focus on 8036 pairs with M vs T snps
 cr10 = cr10[as.character(ogP_with_allele_snps$Gohir.A),]  # restrict to 8036 pairs
 cr20 = cr20[as.character(ogP_with_allele_snps$Gohir.A),]  # restrict to 8036 pairs
 crUnion = crUnion[as.character(ogP_with_allele_snps$Gohir.A),]  # restrict to 8036 pairs
+Tt10 = Tt10[as.character(ogP_with_allele_snps$Gohir.A),]  # restrict to 8036 pairs
+Tt20 = Tt20[as.character(ogP_with_allele_snps$Gohir.A),]  # restrict to 8036 pairs
+N =nrow(cr10) #8036
+apply(crUnion,2,table)
+#       R1sig R2sig R1vsR2 Ttsig
+# FALSE  3985  4190   7085  5779
+# TRUE   4051  3846    951  2257
+# TRUE%  0.5041065 0.4785963 0.1183425 0.2808611
 # check
 xtabs(~R1sig+R2sig,data=cr10)
 #      R2sig
@@ -349,43 +413,66 @@ table(cr20$R1vsR2)/nrow(cr20)
 # R1<R2      R1=R2      R1>R2
 # 0.02650572 0.95246391 0.02103036
 
-# how does the magnitude of existing bias change by cis-trans: bias in TX2094, contain RD, showed sig changes between ratio
-with(cr10,t.test(abs(R1),abs(R2))) # not sig
-with(cr10[cr10$R2sig=="R2=1" & rd_P$rd==TRUE,],t.test(abs(R1),abs(R2))) # sig R1>R2
-with(cr10[cr10$R2sig!="R2=1" & rd_P$rd==TRUE,],t.test(abs(R1),abs(R2))) # sig R1<R2
-# Welch Two Sample t-test
-# data:  abs(R1) and abs(R2)
-# t = -3.9721, df = 1098, p-value = 0.00007589
-# alternative hypothesis: true difference in means is not equal to 0
-# 95 percent confidence interval:
-# -0.4654242 -0.1576418
-# sample estimates:
-# mean of x mean of y
-# 1.377457  1.688990
-with(cr20,t.test(abs(R1),abs(R2))) # sig R1>R2
-with(cr20[cr20$R2sig=="R2=1" & rd_P$rd==TRUE,],t.test(abs(R1),abs(R2))) # sig R1>R2 0.9349404 0.4715869
-with(cr20[cr20$R2sig!="R2=1" & rd_P$rd==TRUE,],t.test(abs(R1),abs(R2))) # sig R1<R2 1.801027  2.204624
+save(ogP, ogP_with_allele_snps, cr10, cr20, Tt10, Tt20, crUnion, cr10_22394, cr20_22394, crUnion_22394, Tt10_22394, Tt20_22394, file="homoeoPairs.rdata")
 
-save(ogP, ogP_with_allele_snps, cr10, cr20, crUnion, cr10_22394, cr20_22394, crUnion_22394, file="homoeoPairs.rdata")
 
-#######################################################
-## homoeolog expression bias x regulatory divergence ##
-#######################################################
 
-## Is homoeolog bias associated with RD?
+
 load("RDgenes.rdata")
+rd$b10=ifelse(rd$mt10==rd$tm10, as.character(rd$mt10),"NA")
+rd$b20=ifelse(rd$mt20==rd$tm20, as.character(rd$mt20),"NA")
 rd_At = rd[as.character(ogP_with_allele_snps$Gohir.A),]
 rd_Dt = rd[as.character(ogP_with_allele_snps$Gohir.D),]
 rd_P = rd_At[,c("crd","trd","rd")]
 rd_P$crd = rd_At$crd | rd_Dt$crd # cis variants in at least one homoeolog
 rd_P$trd = rd_At$trd | rd_Dt$trd # trans variants in at least one homoeolog
 rd_P$rd = rd_P$crd | rd_P$trd # cis/trans variants in at least one homoeolog
+
+##############################################
+## total expression x regulatory divergence ##
+##############################################
+## How does RD pattern change total or aggregated expression of homoeologs? This question was not dealt with elsewhere in the manuscript, because homoeologs are treated as individual genes.
+
+# 
+ftable(table(rd_At$b10,rd_Dt$b10,Tt10$dom))
+M<T  M=T  M>T
+
+cis and trans cis and trans     0   12    7
+cis only          0    6    5
+no divergence     7  218   29
+trans only        0    4    4
+cis only      cis and trans     2    1    5
+cis only          6    4    4
+no divergence    15   71   26
+trans only        2    1    1
+no divergence cis and trans    10  198   39
+cis only         14   79   30
+no divergence   265 6244  575
+trans only        9   24   31
+trans only    cis and trans     0    5    5
+cis only          1    1    1
+no divergence     8   30   23
+trans only        4    8    2
+
+ftable(table(rd_P$rd,Tt20$dom))
+M<T  M=T  M>T
+
+FALSE   265 6244  575
+TRUE     78  662  212
+
+
+
+#######################################################
+## homoeolog expression bias x regulatory divergence ##
+#######################################################
+## Is homoeolog bias associated with RD?
 ### are cis/trans variants distributed randomly in homoeolog pairs regardless of bias?
 pdf("homoeo.RD&bias.union.pdf")
 ## Union and rd
 plotCorrespondence(rd_P$rd,crUnion$R1sig, title="RD, Maxxa  AtvsDt",textplot=FALSE,corrplot=FALSE,fisherplot=TRUE) # cis
 plotCorrespondence(rd_P$rd,crUnion$R2sig, title="RD, TX2094 AtvsDt",textplot=FALSE,corrplot=FALSE,fisherplot=TRUE)
 plotCorrespondence(rd_P$rd,crUnion$R1vsR2, title="RD, Maxxa vs TX2094 AtvsDt",textplot=FALSE,corrplot=FALSE,fisherplot=TRUE) # cis
+plotCorrespondence(rd_P$rd,crUnion$Ttsig, title="RD, Maxxa vs TX2094 At+Dt",textplot=FALSE,corrplot=FALSE,fisherplot=TRUE) # cis
 dev.off()
 pdf("homoeo.RD&bias.pdf")
 ## 10dpa
@@ -408,7 +495,22 @@ plotCorrespondence(rd_P$rd,cr20$R2sig, title="20dpa, cis/trans, TX2094 AtvsDt",t
 plotCorrespondence(rd_P$rd,cr20$R1vsR2, title="20dpa, cis/trans, TX2094 vs Maxxa AtvsDt",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE)
 dev.off()
 
-## is any RD pattern biased towards At or Dt
+## Given association between bias and RD, how cis-trans change the range of existing biases? 
+with(cr10[cr10$R2sig!="R2=1" & rd_P$rd==TRUE,],t.test(R1,R2)) # not sig
+with(cr20[cr20$R2sig!="R2=1" & rd_P$rd==TRUE,],t.test(R1,R2)) # not sig
+# SO no bias in up or descrease ratio, R1 vs R2
+## then how were the magnitude of existing bias change by cis-trans: bias in TX2094, contain RD, showed sig changes between ratio
+with(cr10,t.test(abs(R1),abs(R2))) # not sig
+with(cr10[cr10$R2sig=="R2=1" & rd_P$rd==TRUE,],t.test(abs(R1),abs(R2))) 
+# sig R1>R2, increased magnitude without pre-existing bias
+with(cr10[cr10$R2sig!="R2=1" & rd_P$rd==TRUE,],t.test(abs(R1),abs(R2))) 
+# sig R1<R2, decreased magnitube with pre-existing bias
+with(cr20,t.test(abs(R1),abs(R2))) # sig R1>R2
+with(cr20[cr20$R2sig=="R2=1" & rd_P$rd==TRUE,],t.test(abs(R1),abs(R2))) # sig R1>R2 0.9349404 0.4715869
+with(cr20[cr20$R2sig!="R2=1" & rd_P$rd==TRUE,],t.test(abs(R1),abs(R2))) # sig R1<R2 1.801027  2.204624
+# SO reduced magnitude of ratios by RD
+
+## is any RD pattern biased towards At or Dt ----- NO
 rd_At$rd=factor(rd_At$rd, levels=c("cis only","trans only","cis and trans","no divergence"))
 rd_Dt$rd=factor(rd_Dt$rd, levels=c("cis only","trans only","cis and trans","no divergence"))
 pdf("homoeo.AtvsDt.pdf")
@@ -418,6 +520,19 @@ plotCorrespondence(rd_At$rd,rd_Dt$rd, title="AtvsDt, 8036 pairs",textplot=FALSE,
 plotCorrespondence(rd_At$rd[rd_P$rd==TRUE],rd_Dt$rd[rd_P$rd==TRUE], title="AtvsDt, 952 pairs with RD",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE, cex=1.5)
 dev.off()
 
+## For 952 pairs, how each combination of At and Dt RD change ratio and total homoeolog expression?
+select = which(rd_P$rd==TRUE)
+AtDt = paste0("At - ",rd_At$rd,", Dt - ", rd_Dt$rd )
+pdf("homoeo.16AtDt.pdf")
+plotCorrespondence(AtDt[select],cr10$R1vsR2[select], title="16 At-Dt RD groups, 10 dpa ratio",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE, cex=1.5)
+plotCorrespondence(AtDt[select],cr20$R1vsR2[select], title="16 At-Dt RD groups, 20 dpa ratio",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE, cex=1.5)
+plotCorrespondence(AtDt[select], Tt10$dom[select], title="16 At-Dt RD groups, 10 dpa total",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE, cex=1.5)
+plotCorrespondence(AtDt[select], Tt20$dom[select], title="16 At-Dt RD groups, 20 dpa total",textplot=FALSE,corrplot=TRUE,fisherplot=TRUE, cex=1.5)
+dev.off()
+
+
+ftable(table(rd_At$rd,rd_Dt$rd, cr10$R1vsR2))
+ftable(table(rd_At$rd,rd_Dt$rd, cr10$R1vsR2))
 
 ## how does RD pattern change homoeolog contribution ratio?
 load("cistrans.rdata")
@@ -468,7 +583,7 @@ t.test(u$ratio[u$At=="trans only"],u$ratio[u$Dt=="trans only"]) # p-value = 0.00
 t.test(u$ratio[u$At=="cis and trans"],u$ratio[u$Dt=="cis and trans"]) # p-value = 0.07942
 t.test(u$ratio[u$At=="no divergence"],u$ratio[u$Dt=="no divergence"]) # p-value = 0.353
 
-## Another question could be how does RD pattern change aggregated expression of homoeologs. But this question was not dealt with elsewhere in the manuscript, because homoeologs are treated as individual genes. So it is not that relevant i think.
+
 
 ## compare seq divergence between homoelogs
 load("seqDivergence.rdata")
