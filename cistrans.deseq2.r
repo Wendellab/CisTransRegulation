@@ -367,6 +367,8 @@ length(intersect(which(A10$padj<0.05 & !is.na(A10$padj)),which(A20$padj<0.05 & !
 coldataAll2<-coldataAll
 coldataAll2$condition<-coldataAll2$condition2
 dds2 <- DESeqDataSetFromMatrix( countData = countAll, colData = coldataAll2, design = ~ condition)
+rld <- rlog(dds)
+dists <- dist(t(assay(rld)))
 # pairwise deseq workflow, c(maxxa, tx2094), ratio calculated as tx2094/maxxa
 batchMT<- rbind(
 c("maxxa.MxT.10dpa", "tx2094.MxT.10dpa" ),

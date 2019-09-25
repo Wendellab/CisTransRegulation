@@ -489,3 +489,41 @@ dev.off()
 ks.test(S$dN[S$rd=="no divergence"], S$dN[S$rd!="no divergence"])
 ks.test(S$dS[S$rd=="no divergence"], S$dS[S$rd!="no divergence"])
 ks.test(S$dNdS[S$rd=="no divergence"], S$dNdS[S$rd!="no divergence"])
+
+
+library(agricolae)
+xtext=c("cis only","trans only","cis and trans","no divergence"  )
+pdf("FigureS4.pdf", width=13.3, height=7.5)
+par(mfrow=c(2,3))
+
+out=duncan.test(aov(s~rd,data=S),"rd", console=TRUE)
+out$groups = out$groups[xtext,]
+out$means = out$means[xtext,]
+plot(out,variation="SE", main="Promoter SNPs per kb")
+
+out=duncan.test(aov(s.indel~rd,data=S),"rd", console=TRUE)
+out$groups = out$groups[xtext,]
+out$means = out$means[xtext,]
+plot(out,variation="SE",main="Promoter Indels per kb")
+
+out=duncan.test(aov(exon~rd,data=S),"rd", console=TRUE)
+out$groups = out$groups[xtext,]
+out$means = out$means[xtext,]
+plot(out,variation="SE",main="Coding sequence SNPs per kb")
+
+out=duncan.test(aov(dS~rd,data=S),"rd", console=TRUE) #NULL, aov not s
+out$groups = out$groups[xtext,]
+out$means = out$means[xtext,]
+plot(out,variation="SE",main="dS")
+
+out=duncan.test(aov(dN~rd,data=S),"rd", console=TRUE) #NULL, aov not s
+out$groups = out$groups[xtext,]
+out$means = out$means[xtext,]
+plot(out,variation="SE",main="dN")
+
+out=duncan.test(aov(dNdS~rd,data=S),"rd", console=TRUE) #NULL, aov not s
+out$groups = out$groups[xtext,]
+out$means = out$means[xtext,]
+plot(out,variation="SE",main="dN/dS")
+
+dev.off()

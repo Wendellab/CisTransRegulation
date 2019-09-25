@@ -218,7 +218,7 @@ Theoretically, we have four F1 samples to get cis/trans categorization: MxT10dpa
     
 ### Scripts
 
-1. [cistrans.deseq2.r](cistrans.deseq2.r) conducts DE analysis and categorize cis/trans regulatory patterns.
+1. [cistrans.deseq2.r](cistrans.deseq2.r) conducts DE analysis and categorize cis/trans regulatory patterns. In addition, [cistrans.fraser.r](cistrans.fraser.r) conducts the "cross-replicate comparison" method proposed by [Fraser (2019)](https://www.cell.com/trends/genetics/fulltext/S0168-9525(18)30179-3), which estimates the *cis* and *trans* effects from separate replicates, instead of from all replicates by the standard method.
 2. [plotAbsProp.r](plotAbsProp.r) plots |cis|/(|cis|+|trans|) against magnitude of parental expression divergence (quantile groups of |log2A|).
 3. [boxplotByCategory.r](boxplotByCategory.r) draws boxplots by cis/trans categories, corresponding to A, |A|, B, |B|.
 4. [inheritanceMode.r](inheritanceMode.r) categorize additive, dominance and transgressive inheritance in F1s.
