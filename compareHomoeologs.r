@@ -415,6 +415,8 @@ table(cr20$R1vsR2)/nrow(cr20)
 
 save(ogP, ogP_with_allele_snps, cr10, cr20, Tt10, Tt20, crUnion, cr10_22394, cr20_22394, crUnion_22394, Tt10_22394, Tt20_22394, file="homoeoPairs.rdata")
 
+cr=cbind(cr10,cr20)
+write.table(cr,file="homoeo.cr10n20.txt",sep="\t")
 
 
 
