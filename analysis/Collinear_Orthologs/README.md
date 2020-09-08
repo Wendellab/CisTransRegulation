@@ -26,7 +26,7 @@ python /work/LAS/jfw-lab/jconover/scripts/6_Orthofinder_to_all_pairwise.py Singl
 #### Make gff files for MCScanX and MCScanX_h
 This assumes that you already have a single gff file formatted for MCScanX named DDtAt.gff      
 Please consult the [MCScanX manual](http://chibba.pgml.uga.edu/mcscan2/documentation/manual.pdf) for further instruction  
-`cp ../../../DDtAt.gff > ./DDtAt_h.gff`
+`cp ../../../DDtAt.gff > ./DDtAt_h.gff`    
 `cp ../../../DDtAt.gff > ../DDtAt.gff`
 
 ## Step 3; Run MCScanX_h and extract singletons
@@ -56,7 +56,7 @@ Orthogroups.csv is the output from OrthoFinder
 all.groups.tandem is an output file (not required for input) that will contain all tandemly duplicated genes in a network format (similar to OrthoFinder Output)     
 OrthoFinder_singeltons_w_tandems.txt is an output file that will have high-confidence Orthologs from OrthoFinder. This file will determine which syntenic blocks will be used in step 7    
 
-`python 2_Orthofinder_orthologs_from_tandems.py DDtAt.tandem Orthogroups.csv all.groups.tandem OrthoFinder_singletons_w_tandems.txt 
+`python 2_Orthofinder_orthologs_from_tandems.py DDtAt.tandem Orthogroups.csv all.groups.tandem OrthoFinder_singletons_w_tandems.txt `
 
 
 ## Step 7: Find Orthologs based on Synteny in MCScanX, bassed on singletons found in OrthoFinder 
