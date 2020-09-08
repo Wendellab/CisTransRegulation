@@ -13,7 +13,7 @@ orthofinder -f Collinear_Orthologs -t 9 -a 9 -S diamond
 
 
 ## Step 2: Prepare files for MCScanX_h
-#### make .homology
+#### Make .homology file
 ```
 cd Collinear_Orthologs/Results_Feb14 && mkdir MCScanX
 cd MCScanX && mkdir MCScanX_h
@@ -23,9 +23,9 @@ python /work/LAS/jfw-lab/jconover/scripts/6_Orthofinder_to_all_pairwise.py Singl
 ```
 
 
-#### make gff files for MCScanX and MCScanX_h
-##### This assumes that you already have a single gff file formatted for MCScanX named DDtAt.gff
-##### Please consult the [MCScanX manual](http://chibba.pgml.uga.edu/mcscan2/documentation/manual.pdf) for further instruction  
+#### Make gff files for MCScanX and MCScanX_h
+This assumes that you already have a single gff file formatted for MCScanX named DDtAt.gff      
+Please consult the [MCScanX manual](http://chibba.pgml.uga.edu/mcscan2/documentation/manual.pdf) for further instruction  
 `cp ../../../DDtAt.gff > ./DDtAt_h.gff`
 `cp ../../../DDtAt.gff > ../DDtAt.gff`
 
@@ -68,7 +68,7 @@ DDtAt.tandem is the output from MCScanX
 `python 4_MCScan_OrthoFinder_overlap.py OrthoFinder_singletons_w_tandems.txt DDtAt.collinearity geneID.txt DDtAt.tandem`
 
 
-## Step 8 and 6: Check tandem Duplication Size and orthologous group sizes
+## Step 8 and 9: Check tandem Duplication Size and orthologous group sizes
 This isn't necessary, but can used used as a check to see how good the pipeline did. Ideally, there should be small numbers in both files.         
 Larger numbers in the group sizes file indicated large gene groups based on tandem duplications (or errors in synteny analyses)      
 Larger numbers in the tandem array file indicated errors in the synteny analysis. This could happen for a number of reason, especially given genomes with a high number of polyploid events in its evolutionary past. 
