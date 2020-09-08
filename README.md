@@ -1,18 +1,232 @@
 # Analysis of cis-trans regulation underlying cotton fiber domestication
 
-## Experimental Design
-Twenty-four RNA-seq libraries were generated for 10 and 20 dpa fibers from wild and domesticated *Gossypium hirsutum* accessions and their reciprocal F1 hybrids each with three replicates: 2 fiber developmental stages x 4 accessions x 3 replicates (4 reps for Maxxa) = 26 samples.   
+Long term data storage location: `/lss/research/jfw-lab/Projects/AD1_domestication_cistrans/`
 
-* fiber development: 10 dpa and 20 dpa
-* cotton accessions: Maxxa, TX2094, F1_MxT, F1_TxM
-* biological replicates: r1, r2, r3
+## Experimental Design
+
+RNA-seq libraries were generated for 10 and 20 dpa fibers from wild and domesticated *Gossypium hirsutum* accessions and their reciprocal F1 hybrids each with three replicates:
+
+* 2 fiber development: 10 dpa and 20 dpa
+* 4 cotton accessions: Maxxa, TX2094, reciprocal F1 hybrids MxT and TxM
+* 3-4 biological replicates
 
 ## RNA-seq mapping and expression estimation
-RNA-seq reads were mapped against *G. hirsutum* transcriptome to estimate gene expressions in different accessions. The latest genome sequence and annotation was used as mapping reference ([Saski et al. 2017](https://phytozome.jgi.doe.gov/pz/portal.html#!info?alias=Org_Ghirsutum_er)). In order to distinguish Maxxa(m) and TX2094(t) alleles in F1 hybrids, we used [HyLiTE](http://hylite.sourceforge.net) (Duchemin et al. 2015) to detect allelic SNPs followed by allele-specific read partitioning.
+
+RNA-seq reads were mapped against *G. hirsutum* transcriptome to estimate gene expressions in different accessions. In order to distinguish Maxxa(m) and TX2094(t) alleles in F1 hybrids, we used [HyLiTE](http://hylite.sourceforge.net) (Duchemin et al. 2015) to detect allelic SNPs followed by allele-specific read partitioning.
+
+### 1. prepare reference transcriptome
+
+Three reference genomes are now available for *G. hirstum* cultivar TM1 by @Li_genome_2015 [AD1_BGI](https://www.cottongen.org/species/Gossypium_hirsutum/bgi-AD1_genome_v1.0), @Zhang_tm1_2015 [AD1_NBI](https://www.cottongen.org/species/Gossypium_hirsutum/nbi-AD1_genome_v1.1) and Saski et al (2017) [AD1_458](https://phytozome.jgi.doe.gov/pz/portal.html#!info?alias=Org_Ghirsutum_er). The latest one (Saski et al, 2017) was used in this analysis.
+
+    ## locate reference transcriptome on server
+    cd ~/jfw-lab/GenomicResources/archived_resources/AD1Saski/annotation/
+    ## how many primary transcripts? 66,577
+    zcat Ghirsutum_458_v1.1.cds_primaryTranscriptOnly.fa.gz | grep -c '>'
+    zcat Ghirsutum_458_v1.1.cds_primaryTranscriptOnly.fa.gz >~/cistrans/Ghirsutum_458_v1.1.cds_primaryTranscriptOnly.fasta
+    
+In addition to nuclear genes, we could use mitochondrial genes to check samples from reciprocal F1 hybrids. The mt genome was also sequenced ([Liu et al 2013](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0069476#s2)), containing 35 protein genes. Go to [GenBank: JX944505.1](https://www.ncbi.nlm.nih.gov/nuccore/430728001), Send "Coding Sequences" to create "FASTA Nucleotide" file, save as `mt.transcript.fasta`. Note that only 34 coding regions were annotated.
+   
+    ## rename mt genes
+    cp mt.transcript.fasta mt.transcript.rename.fasta 
+    sed -i 's/lcl.*gene=/mt_/g' mt.transcript.rename.fasta 
+    sed -i 's/\].*//g' mt.transcript.rename.fasta 
+    
+I prepared the TM1 reference transcriptome with both nuclear and mt genes.
+
+    cat Ghirsutum_458_v1.1.cds_primaryTranscriptOnly.fasta mt.transcript.rename.fasta > TM1.nuclNmt.transcript.fasta
+    ## load bowtie2 Version: 2.2.6 
+    module load bowtie2
+    ## build bowtie reference
+    bowtie2-build TM1.nuclNmt.transcript.fasta TM1new
+
+### 2. Extract homoeologous relationships
+
+This analysis was conducted by Justin Conovor using the customized orthoFinder pipeline. Input files were prepared as follows.
+
+    ### get protein sequences for At and Dt transcripts
+    zcat ~/jfw-lab/GenomicResources/archived_resources/AD1Saski/annotation/Ghirsutum_458_v1.1.protein_primaryTranscriptOnly.fa.gz > Ghirsutum_458_v1.1.protein_primaryTranscriptOnly.fasta 
+    # check naming, Gohir.[1Z/A/D]
+    grep ">" Ghirsutum_458_v1.1.protein_primaryTranscriptOnly.fasta | cut -c-10 |sort | uniq -c
+    # now prepare seperate fasta
+    sed 's/.p.*//g' Ghirsutum_458_v1.1.protein_primaryTranscriptOnly.fasta >TM1new.protein.fasta
+    grep '>Gohir.D' TM1new.protein.fasta|sed 's/>//g' >IDs.D.txt
+    grep '>Gohir.A' TM1new.protein.fasta|sed 's/>//g' >IDs.A.txt
+    grep '>Gohir.1Z' TM1new.protein.fasta|sed 's/>//g' >IDs.Z.txt
+    bioawk -cfastx 'BEGIN{while((getline k <"IDs.A.txt")>0)i[k]=1}{if(i[$name])print ">"$name"\n"$seq}' TM1new.protein.fasta >TM1new.protein.At.fasta
+    bioawk -cfastx 'BEGIN{while((getline k <"IDs.D.txt")>0)i[k]=1}{if(i[$name])print ">"$name"\n"$seq}' TM1new.protein.fasta >TM1new.protein.Dt.fasta
+    bioawk -cfastx 'BEGIN{while((getline k <"IDs.Z.txt")>0)i[k]=1}{if(i[$name])print ">"$name"\n"$seq}' TM1new.protein.fasta >TM1new.protein.Z.fasta 
+
+    ### get GFF
+    zcat ~/jfw-lab/GenomicResources/archived_resources/AD1Saski/annotation/Ghirsutum_458_v1.1.gene.gff3.gz > Ghirsutum_458_v1.1.gene.gff3
+
+    ### get D5 protein CDs
+    cp ~/jfw-lab/GenomicResources/archived_resources/gmapdb/D5/transcripts/cotton.v2.1.prot221.cds.fa .
+    # get primary transcript
+    grep ">.*[1]$" cotton.v2.1.prot221.cds.fa | sed 's/>//g' >D5.IDs.txt
+    bioawk -cfastx 'BEGIN{while((getline k <"D5.IDs.txt")>0)i[k]=1}{if(i[$name])print ">"$name"\n"$seq}' cotton.v2.1.prot221.cds.fa >D5.transcript.fasta
+    # translate
+    module load emboss
+    transeq -sequence D5.transcript.fasta -outseq D5.protein.fasta -frame 1
+    sed 's/_1//g' D5.protein.fasta >D5.protein.rn.fasta
+
+### 3. prepare RNA-seq fastq files
+
+In addition to the 26 samples generated by Ying, I also inspected previous AD1 fiber RNA-seq datasets, including Mi-Jeong's SE data ([SRP017061](https://www.ncbi.nlm.nih.gov/sra/?term=SRP017061)), BYU data, and some Yuc samples from JJ's project.
+
+    ## Raw files in ISS
+    # Ying's project, PE
+    ls ~/jfw-lab/RawData/cis_trans_MaxxaTX2094/
+    # JJ's samples, PE
+    ls ~/jfw-lab/RawData/fiberTranscriptomes/Novogene_2nd60_raw_data/Yuc*
+    
+    # Simon's RNA-seq (JoeG's project now), SE
+    ls ~/jfw-lab/RawData/diploidFiberTranscriptome/All_Lanes
+
+    ## download deposisted fastq, SE
+    # Mi-Jeong's AD1 dataset: PRJNA178969
+    # BYU dataset: PRJNA12541
+    module load sratoolkit
+    # fastq-dump --gzip -I --split-files SRR2531556
+    mkdir fastq
+    cd fastq
+    bash downloadFastq.sh
+    
+Trim raw fastq files.
+
+    mkdir ~/cis
+    # python needed for Cutadapt
+    module load python 
+    # ~/TrimGalore-0.4.3/trim_galore --paired -o ~/cistrans/trimmed/ <fastq1> <fastq2>
+    bash trimReads.pe.sh
+    bash trimReads.se.sh
+    
+Summarize raw and trimmed fastq statistics: 
+    
+    paste <(grep 'Total reads processed' trimmed/*report.txt) <(grep 'Reads with adapters' trimmed/*report.txt) <(grep 'Total written' trimmed/*report.txt) >fastqSummary.txt
+    paste <(grep 'Total reads processed' trimmed2/*report.txt) <(grep 'Reads with adapters' trimmed2/*report.txt) <(grep 'Total written' trimmed2/*report.txt) >>fastqSummary.txt
+    paste <(grep 'Total reads processed' trimmed3/*report.txt) <(grep 'Reads with adapters' trimmed3/*report.txt) <(grep 'Total written' trimmed3/*report.txt) >>fastqSummary.txt
+        
+### 4. run Bowtie2 mapping
+
+HyLiTE can take sequences (`.fastq`), mapping results (`.sam`), or mapping variants (`.pileup`) as input. It is more flexible to run mapping first, then start HyLiTe (noting that running from mapping variants (`.pileup`) results lead to messed-up sample order). Bowtie2 mapping `-N 1` allows one mismatch, more sensitive but slower than default 0. Although not specified in HyLiTE pipeline, I used `--no-mixed --no-discordant --no-unal --dovetail` to disable mixed mode only looking for concordant alignment of PE reads, suppress SAM record for reads not aligned, and allow overlap containing one read. For example:
+
+    bowtie2 -q -p 8 -t -N 1 --no-mixed --no-discordant --no-unal --dovetail -x ~/cistrans/TM1new -1 TX2094-3-10dpa-fiber_201_R1.fq -2 TX2094-3-10dpa-fiber_201_R2.fq -S TX2094-3-10dpa-fiber_201.sam 2>TX2094-3-10dpa-fiber_201.log
+
+Run Bowtie2 bash commands seperating for trimmed PE and SE fastq files.
+    
+    # cd trimmed
+    bash runBowtie2.pe.sh >runBowtie2.pe.112117.txt
+    # check log
+    paste <(grep 'overall' *log) <(grep 'paired; of these' *log) <(grep '0 times' *log)
+    
+    # cd trimmed2 or trimmed3
+    bash runBowtie2.se.sh >runBowtie2.se.112117.txt
+
+Move all `.sam` files to seperate folder, convert to sorted `.bam` files and count mapped reads.
+
+    # samtools view -bS <sam> | samtools sort - -o <bam> ; samtools index <bam>
+    bash getCount.sh 
+
+### 5. plot PCA to identify problematic samples
+
+Run R script [PCAanalysis.r](PCAanalysis.r) to examine the grouping of fiber RNA-seq samples. According to [plotGrouping.rld.pdf](plotGrouping.rld.pdf), normalized and log-scaled counts were first clustered by developmental stage, as red (10dpa) and blue (20dpa) samples were seperated by PC1. Next, PE (yb&jj) and SE (byu, mj, simon) samples appeared to be seperatedly clustered by PC2. Thus, **it can be problematic to combine PE and SE datasets**.
+    
+Restrict our sampling to only 10 and 20 dpa PE data, [plotGrouping.1020.rld.yj.pdf](plotGrouping.1020.rld.yj.pdf) revealed that **Ying's Maxxa-20dpa-110 and TX2094-20dpa-2 were mislabeled 10dpa samples, which should be excluded.** JJ's Yuc-20dpa-281 will be used as a 20dpa replicate for TX2094. The grouping of F1 samples are still weird, but shouldn't affect HyLiTE run: F1- 10dpa - (4,5), (1,2,3,6); 20dpa - (1,4,5), (2,3,6).
+
+### 6. run HyLiTE
+Create protocol file `sample_protocol_file_sam.txt` [here](sample_protocol_file_sam.txt), by listing all `.sam` files for parental and hybrid samples. **Note that even HyLiTe says it can run from input `mpileup` file, but the output mis-placed all sample names!!!!**
+
+    module load python/2.7.12
+    HyLiTE -v -S -f sample_protocol_file_sam.txt -r TM1.nuclNmt.transcript.fasta -b TM1new -n results112717 >results112717.log 2>&1
+    
+    # HyLiTE options:
+    # -v turns on verbose runtime comments
+    # -f specifies the protocol file
+    # -r specifies the .fasta file containing the reference gene sequences
+    # -n allows the user to provide a name for the HyLiTE analysis, and creates a directory for output files
+    # -S use mapping .sam results instead of .fastq from protocol file
+    # -b use pre built ref
+
+### 7. interpretation of HyLiTE output files
+
+The latest run is **results112717**.
+
+#### Result files for following analysis
+* `resultsXXXXXX.expression.txt` : Read count table for total gene expression from all samples, regardless of different alleles in F1 (as total expression of alleles used).
+* `resultsXXXXXX.F1.F1-XXdpa-X.read.summary.txt` : Read count table for allelic gene expression in F1. On filer per 12 file one for each F1 sample12 F1 files (6 accession x 2 dpa).
+
+#### Summary and other files
+* `resultsXXXXXX.run.summary.txt` : Summarization of F1 read assignment and SNP identification.
+  * Total number of child reads mapping on the reference:   150,638,950
+  * Number of child read unambiguously assigned to a parent:        22,989,938
+  * Number of child read unambiguously assigned to maxxa:   11,332,177
+  * Number of child read unambiguously assigned to TX2094:  11,657,761
+  * Number of child read with uninformative assignment:     46,127,873
+  * Number of child read with unknown or ambiguous assignement:     81,521,139
+  * Total number of SNPs identified:        632,923
+  * Total number of child unique SNPs:      258,869
+* `resultsXXXXXX.snp.txt` : Information of all SNPs detected, one SNP each line, accounting for 33 categories (presence and absence combination) of SNP
+* `resultsXXXXXX.snp.summary.txt` : Categorization information of above SNPs tabulated by 66611 genes.
+* `resultsXXXXXX.F1.F1-XXdpa-X.read.txt` : Specific information about every read in the child for a given biological replicate. One file per 12 F1 files (6 accession x 2 dpa). 
+* `resultsXXXXXX.pickle` : used to save the memory content of any python object in order to be able to load it again later. 
+
+### 8. Preprocessing of hylite output files
+
+Using [cistrans.pre.r](cistrans.pre.r), hylite output files will be processed into a series of result tables, including: 
+
+* `SNPtypes.txt` - Categorization of identified SNPs
+* `F1readSummary.txt` - Summary of F1 read assignment
+* `totalReadCounts.txt` -  counts of total gene expression, genes (row) X 26 RNA-seq libraries (column)
+* `MaxxaAlleleReadCounts.txt` - for 12 F1 libraries (column), allele-specific read count assigned to Maxxa alleles were presented for these genes contain diagnostic SNPs.
+* `TX2094AlleleReadCounts.txt` - same as above but for TX2094 allele.
+* `TM1.nuclNmt.transcript.len.txt` - gene length for all genes
+* `TM1.nuclNmt.transcript.len.diagnostic.txt` - gene length for genes with diagnostic allele-specifc SNPs
 
 
+Briefly, a total of 50,500 genes contain any type of SNPs, and 27,820 genes contain Maxxa/TX2094 diagnostic SNPs. Noting that genes (29,334) containing allelic counts extracted from `read.summary.txt` files mostly agree with the genes (28,820) containing diagnostic SNPs extracted from `snp.txt` file; the discrepancy probably came from MASKED snps, which means low coverage SNP site in some accession but probably allowing read assignment in some other accessions. We will next use the intersection (27,816) of this two lists. 
 
----
-previous results, will be updated
-* [fiberAnalysis.md](fiberAnalysis.md) - Detailed documentation of data analysis from RNA-seq to cis-trans results
-* [mappingResult.md](mappingResult.md) - Summary of RNA-seq library and mapping statistics
+
+## Cis-Trans analysis
+
+Given that 27,816 out of 66610 genes contain diagnostic SNPs between M and T alleles. The cis/trans analysis was performed for this subset of genes. Differential gene expression was conducted using DESeq2 to calculate parental expression ratio (A=Maxxa/TX2094, as cis+trans), allelic expression ratio in F1 (B=m/t, as cis), and A-B (as trans).
+
+Theoretically, we have four F1 samples to get cis/trans categorization: MxT10dpa, MxT20dpa, TxM10dpa, TxM20dpa. In addition, six F1 accession were also pooled to obtain F1.10dpa and F1.20dpa patterns. 
+
+### Questions and hypotheses
+
+1. What are the net contributions of _cis_ and _trans_ regulatory differences to total expression divergence between wild and domesticated cottons?
+    - What is the overlap and difference between reciprocal hybrids?
+1. How do expression divergence and regulatory divergence (the cis proportion of total regulatory changes) vary with sequence divergence (with respect to both gene body and promoter regions)? 
+    - H0: expression divergence increases as sequence divergence increase. (more so in promoter than gene body?) 
+    - H1: cis changes become more dominant as sequence divergence increase. (more so in promoter than gene body?)
+    - H2: cis regulatory changes is linked with the presence of promoter SNPs, however not necessarily correlate with the amount of SNPs.
+1. How are the mode of inheritance (i.e., additivity, dominance, transgression, conserved) and the mechanisms of regulatory divergence related?
+    - H0: no association.
+    - H1: cis only are more likely to be additively inherited, trans only are more likely to show dominance, compensatory genes are likely to show transgression.
+1. How are sequence divergence, expression divergence and mechanisms of regulatory divergence each associated with the network property of genes?
+    - H0: Hub genes are supposed to have high pleiotropic effects, therefore are expected to be depleted of synonymous mutations in gene body; this pattern may not hold for promoter mutations.
+    - H1: Hub genes are less likely to exhibit expression divergence, therefore enriched for conserved expression.
+    - H2: Hub genes are more likely to exhibit cis only than trans only regulatory changes, because of their upstream locations and relatively smaller target size of trans-regulatory mutations than those downstream genes located in the terminal of networks.  
+1. In allopolyploid cotton, how do expression divergence and regulatory divergence evolve between homoeologous genes?
+    - H0: At and Dt homoeologs evolved collectively
+    - H1: At and Dt evolved independently, especially for those exhibiting homoeolog expression difference (At!=Dt in wild) and distant network locations. 
+    - H2: homoeologs that show expression level dominance are biased towards trans effects, relative to homoeologs that do not show this expression pattern.
+1. What criteria can we apply to get good candidate genes of fiber domestication?
+    - Most known domestication genes are TFs with causal cis mutations, so quite strictly, we can consider TFs exhibiting cis regulatory changes (cis only, as well as cis-and-trans) and sequence divergence in promoter, also as network and subnetwork hubs. A close inspection of promoter sequences may help us to identify cis regulatory motifs targeted by selection.
+    - Rarely found but theoretically possible, domestication can act in trans. We can look at TFs that are surrounded by trans regulated genes in network; these TFs may not exhibit expression divergence themselves, but their promoter and gene body sequence divergence can be informative.
+
+    
+### Scripts
+
+1. [cistrans.deseq2.r](cistrans.deseq2.r) conducts DE analysis and categorize cis/trans regulatory patterns. 
+    * A a series of different log2FoldChange cutoffs were tested to derive seven regulatory categories, which resulted consistent categorical composition (see [checkCistran.by.cutoff.pdf](checkCistran.by.cutoff.pdf)). Thus, additional log2FoldChange cutoff was NOT applied.
+    * In revision, [cistrans.fraser.r](cistrans.fraser.r) conducts the "cross-replicate comparison" method proposed by [Fraser (2019)](https://www.cell.com/trends/genetics/fulltext/S0168-9525(18)30179-3), which estimates the *cis* and *trans* effects from separate replicates, instead of from all replicates by the standard method. 
+2. [plotAbsProp.r](plotAbsProp.r) plots |cis|/(|cis|+|trans|) against magnitude of parental expression divergence (quantile groups of |log2A|).
+3. [boxplotByCategory.r](boxplotByCategory.r) draws boxplots by cis/trans categories, corresponding to A, |A|, B, |B|.
+4. [inheritanceMode.r](inheritanceMode.r) categorize additive, dominance and transgressive inheritance in F1s.
+5. [compareReciprocalF1s.r](compareReciprocalF1s.r) compares inferred categories between MxT and TxM, and generate the list of RD genes from their overlap.
+6. [relateSeqDivergence.r](relateSeqDivergence.r) characterizes promoter and coding sequence divergence in conjunction with RD patterns.
+7. [compareHomoeologs.r](compareHomoeologs.r) analyzes homoeolog expression bias and the association to RD patterns.
+8. [coexpressionNet.r](coexpressionNet.r) construct coexpression network and extract network properties.
+9. [functionEnrichment.r](functionEnrichment.r) conducts GO enrichment and GSEA analysis.
+

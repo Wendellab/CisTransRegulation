@@ -1,0 +1,12 @@
+Maxxa.txt	10dpaPE	Maxxa-yb-10dpa-09, Maxxa-yb-10dpa-110, Maxxa-yb-10dpa-112, Maxxa-yb-10dpa-113
+Maxxa.txt	10dpaSE	Maxxa-simon-10dpa-1, Maxxa-byu-10dpa-1, Maxxa-mj-10dpa-1
+Maxxa.txt	15dpaSE	Maxxa-simon-15dpa-1
+Maxxa.txt	20dpaPE	Maxxa-yb-20dpa-09, Maxxa-yb-20dpa-110, Maxxa-yb-20dpa-112, Maxxa-yb-20dpa-113
+Maxxa.txt	20dpaSE	Maxxa-simon-20dpa-1, Maxxa-byu-20dpa-1, Maxxa-mj-20dpa-1
+Maxxa.txt	5dpaSE	Maxxa-simon-5dpa-1
+TX2094.txt	10dpaPE	TX2094-yb-10dpa-1, TX2094-yb-10dpa-2, TX2094-yb-10dpa-3, Yuc-jj-10dpa-281
+TX2094.txt	10dpaSE	TX2094-byu-10dpa-1, TX2094-mj-10dpa-1
+TX2094.txt	15dpaSE	Yuc-simon-15dpa-1
+TX2094.txt	20dpaPE	TX2094-yb-20dpa-1, TX2094-yb-20dpa-3, Yuc-jj-20dpa-281
+TX2094.txt	20dpaSE	TX2094-mj-20dpa-1, Yuc-simon-20dpa-1
+TX2094.txt	5dpaSE	Yuc-simon-5dpa-1
