@@ -15,18 +15,18 @@ orthofinder -f Collinear_Orthologs -t 9 -a 9 -S diamond
 cd Collinear_Orthologs/Results_Feb14 && mkdir MCScanX
 cd MCScanX && mkdir MCScanX_h
 cd MCScanX_h
-python OrthoFinder_to_Singletons.py ../../Orthogroups.csv > singletons.txt
+head -1 ../../Orthogroups.csv > Singletons.txt && awk '(NR!=1 && !/^\t|\t\t|\t.$/) {for (i=1; i<NF; i++) printf $i "\t"; print $NF}' ../../Orthogroups.csv | grep -v "," >> Singletons.txt
+python /work/LAS/jfw-lab/jconover/scripts/6_Orthofinder_to_all_pairwise.py Singletons.txt DDtAt.homology
 ```
 
-`python Singletons_to_pairwise.py singletons.txt > DDtAt_h.homology`
 
 \#Make .gff file for MCScan input    
-`cp DDtAt.gff > MCScanX_h/DDtAt_h.gff`
+`cp ../../../DDtAt.gff > ./DDtAt_h.gff`
 
 ```
 module load mscanx/2017/-4-3
 MCScanX_h MCScanX_h/DDtAt_h
-python MCScanh_OrthoFinder_singletons.py MCScanX_h/DDtAt_h.collinearity 3 > DDtAt_h.singletons
+#python MCScanh_OrthoFinder_singletons.py MCScanX_h/DDtAt_h.collinearity 3 > DDtAt_h.singletons
 ```
 ####Prepare blast files for MCScanX
 Since Orthofinder is also based on sequential all-vs.-all blast, we will just modify those files to fix the OrthoFinder-specific formatting gene names.    
@@ -38,3 +38,6 @@ rm blast_orthoformat.txt
 ```
 
 #### Make gff file for MCScanX
+
+####Run MCScanX on full dataset with null arguments
+`MCScanX -b 2
