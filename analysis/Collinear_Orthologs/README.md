@@ -1,8 +1,8 @@
-#Creating a Genome-Wide Dataset of Collinear Orthologs
+# Creating a Genome-Wide Dataset of Collinear Orthologs
 
 This pipeline is designed to take proteins sequences from several species and create a list of orthologs in which 
 
-#Step 1: Run Orthofinder on all proteins
+## Step 1: Run Orthofinder on all proteins
 
 
 
@@ -20,7 +20,7 @@ python /work/LAS/jfw-lab/jconover/scripts/6_Orthofinder_to_all_pairwise.py Singl
 ```
 
 
-\#Make .gff file for MCScan input    
+## Make .gff file for MCScan input    
 `cp ../../../DDtAt.gff > ./DDtAt_h.gff`
 
 ```
@@ -28,7 +28,7 @@ module load mscanx/2017/-4-3
 MCScanX_h MCScanX_h/DDtAt_h
 #python MCScanh_OrthoFinder_singletons.py MCScanX_h/DDtAt_h.collinearity 3 > DDtAt_h.singletons
 ```
-####Prepare blast files for MCScanX
+#### Prepare blast files for MCScanX
 Since Orthofinder is also based on sequential all-vs.-all blast, we will just modify those files to fix the OrthoFinder-specific formatting gene names.    
 
 ```    
@@ -39,5 +39,6 @@ rm blast_orthoformat.txt
 
 #### Make gff file for MCScanX
 
-####Run MCScanX on full dataset with null arguments
-`MCScanX -b 2
+#### Run MCScanX on full dataset with null arguments
+```MCScanX -b 2 ./DDtAt
+```
