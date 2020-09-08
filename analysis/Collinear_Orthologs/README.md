@@ -46,30 +46,31 @@ rm blast_orthoformat.txt
 ```
 
 ## Step 5: Run MCScanX on full dataset with null arguments
-```MCScanX -b 2 ./DDtAt
+```
+MCScanX -b 2 ./DDtAt
 ```
 
 ## Step 6: Find all singleton genes from OrthoFinder (including those in tandem arrays)
-DDtAt.tandem is the output from MCScanX 
-Orthogroups.csv is the output from OrthoFinder
-all.groups.tandem is an output file (not required for input) that will contain all tandemly duplicated genes in a network format (similar to OrthoFinder Output)
-OrthoFinder_singeltons_w_tandems.txt is an output file that will have high-confidence Orthologs from OrthoFinder. This file will determine which syntenic blocks will be used in step 7
+DDtAt.tandem is the output from MCScanX       
+Orthogroups.csv is the output from OrthoFinder      
+all.groups.tandem is an output file (not required for input) that will contain all tandemly duplicated genes in a network format (similar to OrthoFinder Output)     
+OrthoFinder_singeltons_w_tandems.txt is an output file that will have high-confidence Orthologs from OrthoFinder. This file will determine which syntenic blocks will be used in step 7    
 
 `python 2_Orthofinder_orthologs_from_tandems.py DDtAt.tandem Orthogroups.csv all.groups.tandem OrthoFinder_singletons_w_tandems.txt 
 
 
 ## Step 7: Find Orthologs based on Synteny in MCScanX, bassed on singletons found in OrthoFinder 
-OrthoFinder_singletons_w_tandems.txt is the output from step 6
-DDtAt.collinearity is the output from MCScanX
-Each line in the geneID.txt file should be the begnning string for gene sequence names (e.g. Gorai, Gohir.A, Gohir.D)
+OrthoFinder_singletons_w_tandems.txt is the output from step 6      
+DDtAt.collinearity is the output from MCScanX     
+Each line in the geneID.txt file should be the begnning string for gene sequence names (e.g. Gorai, Gohir.A, Gohir.D)       
 DDtAt.tandem is the output from MCScanX
 
 `python 4_MCScan_OrthoFinder_overlap.py OrthoFinder_singletons_w_tandems.txt DDtAt.collinearity geneID.txt DDtAt.tandem`
 
 
 ## Step 8 and 6: Check tandem Duplication Size and orthologous group sizes
-This isn't necessary, but can used used as a check to see how good the pipeline did. Ideally, there should be small numbers in both files. 
-Larger numbers in the group sizes file indicated large gene groups based on tandem duplications (or errors in synteny analyses) 
+This isn't necessary, but can used used as a check to see how good the pipeline did. Ideally, there should be small numbers in both files.         
+Larger numbers in the group sizes file indicated large gene groups based on tandem duplications (or errors in synteny analyses)      
 Larger numbers in the tandem array file indicated errors in the synteny analysis. This could happen for a number of reason, especially given genomes with a high number of polyploid events in its evolutionary past. 
 
 ```
