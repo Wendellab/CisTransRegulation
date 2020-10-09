@@ -7,7 +7,7 @@ to increase the total number of orthogroups detected.
 This program outputs one file: 
 all.singletons #file in which only single copy genes are detected by MCScanX, unless that gene is part of a tandem array.
 
-Usage: .py all.collinearity all.tandem <number of genomes in analysis>"""
+Usage: .py all.group.tandem all.collinearity <number of genomes in analysis> all.singletons"""
 
 import sys
 
