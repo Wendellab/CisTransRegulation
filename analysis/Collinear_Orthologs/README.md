@@ -29,38 +29,39 @@ Please consult the [MCScanX manual](http://chibba.pgml.uga.edu/mcscan2/documenta
 `cp ../../../DDtAt.gff > ./DDtAt_h.gff`    
 `cp ../../../DDtAt.gff > ../DDtAt.gff`
 
-## Step 3; Run MCScanX_h and extract singletons
+## Step 3: Prepare blast files for MCScanX
+Since Orthofinder is also based on sequential all-vs.-all blast, we will just modify those files to fix the OrthoFinder-specific formatting gene names.
+
+```
+gunzip -c ../WorkingDirectory/Blast*.gz >> blast_orthoformat.txt
+python 1_Orthofinder_blast_uncode.py ../WorkingDirectory/SequenceIDs.txt blast_orthoformat.txt > DDtAt.blast
+rm blast_orthoformat.txt
+```
+
+## Step 4; Run MCScanX_h and MCScanX 
 ```
 module load mscanx/2017/-4-3
 MCScanX_h ./DDtAt_h
-python 3_Orthofinder_singletons_from_MCScanXh.py MCScanX_h/DDtAt_h.collinearity 3 > DDtAt_h.singletons
-```
-
-## Step 4: Prepare blast files for MCScanX
-Since Orthofinder is also based on sequential all-vs.-all blast, we will just modify those files to fix the OrthoFinder-specific formatting gene names.    
-
-```    
-gunzip -c ../WorkingDirectory/Blast*.gz >> blast_orthoformat.txt
-python 1_Orthofinder_blast_uncode.py ../WorkingDirectory/SequenceIDs.txt blast_orthoformat.txt > DDtAt.blast  
-rm blast_orthoformat.txt  
-```
-
-## Step 5: Run MCScanX on full dataset with null arguments
-```
 MCScanX -b 2 ./DDtAt
 ```
 
-## Step 6: Find all singleton genes from OrthoFinder (including those in tandem arrays)
-DDtAt.tandem is the output from MCScanX       
-Orthogroups.csv is the output from OrthoFinder      
-all.groups.tandem is an output file (not required for input) that will contain all tandemly duplicated genes in a network format (similar to OrthoFinder Output)     
-OrthoFinder_singeltons_w_tandems.txt is an output file that will have high-confidence Orthologs from OrthoFinder. This file will determine which syntenic blocks will be used in step 7    
+## Step 5: Find all singleton genes from OrthoFinder (including those in tandem arrays)
+DDtAt.tandem is the output from MCScanX
+Orthogroups.csv is the output from OrthoFinder
+all.groups.tandem is an output file (not required for input) that will contain all tandemly duplicated genes in a network format (similar to OrthoFinder Output)
+OrthoFinder_singeltons_w_tandems.txt is an output file that will have high-confidence Orthologs from OrthoFinder. This file will determine which syntenic blocks will be used in step 7
 
 `python 2_Orthofinder_orthologs_from_tandems.py DDtAt.tandem Orthogroups.csv all.groups.tandem OrthoFinder_singletons_w_tandems.txt `
 
 
+## Step 6 Extract Tandem Genes and Tandem Arrays from MCScanX_h results 
+```
+python 3_Orthofinder_singletons_from_MCScanXh.py all.groups.tandem MCScanX_h/DDtAt_h.collinearity 3 DDtAt_h.singletons
+```
+
+
 ## Step 7: Find Orthologs based on Synteny in MCScanX, bassed on singletons found in OrthoFinder 
-OrthoFinder_singletons_w_tandems.txt is the output from step 6      
+OrthoFinder_singletons_w_tandems.txt is the output from step 5      
 DDtAt.collinearity is the output from MCScanX     
 Each line in the geneID.txt file should be the begnning string for gene sequence names (e.g. Gorai, Gohir.A, Gohir.D)       
 DDtAt.tandem is the output from MCScanX

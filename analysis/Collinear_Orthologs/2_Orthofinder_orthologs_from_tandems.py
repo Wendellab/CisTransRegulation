@@ -3,7 +3,7 @@
 """Usage: python .py <concat.tandem> Orthogroups.csv all.groups.tandem Outfile.txt 
 
 This program takes the Orthogroups.csv results file from OrthoFinder (Emms and Kelly 2015) 
-and the .tandem file from MCScanX to filter out any groups that are singleton groups, or groups
+and the .tandem file from MCScanX (<concat.tandem>) to filter out any groups that are singleton groups, or groups
 in which all paralogs are in a single tandem array with no interspacing gene(s). 
 
 The output of this program is a pairwise list of all single-genic orthogroups, except those that are within 
